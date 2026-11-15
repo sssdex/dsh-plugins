@@ -1,0 +1,7 @@
+{
+  "apiKey": "sk-替换成你的key",
+  "baseUrl": "https://apihub.agnes-ai.com/v1",
+  "outputDir": "agnes-out",
+  "imageModel": "agnes-image-2.5-flash",
+  "videoModel": "agnes-video-2.5"
+}

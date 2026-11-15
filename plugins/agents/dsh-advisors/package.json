@@ -1,0 +1,54 @@
+{
+  "name": "dsh-advisors",
+  "version": "0.1.0",
+  "description": "只读顾问子智能体：遇到前端审美、建模或后端设计问题时，询问顾问。四个领域可各自指定模型（默认全 GPT-6 Astra）。顾问只给方法与建议，不参与实施。",
+  "type": "module",
+  "main": "index.js",
+  "icon": "./icon.svg",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "docs",
+    "icon.svg",
+    "HANDOFF.md"
+  ],
+  "scripts": {
+    "test": "node --import ./test/shim-loader.mjs test/host-probe.mjs && node test/client-probe.mjs && node test/restrict-semantics-probe.mjs"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-slots",
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ]
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-tools": "*"
+  },
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "advisor",
+    "subagent",
+    "gpt"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.13.0"
+  }
+}

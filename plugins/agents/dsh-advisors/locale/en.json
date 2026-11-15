@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Read-only advisors",
+    "description": "For UI taste, modeling, and backend design questions, consult a read-only advisor subagent. Each domain can run on its own model (Settings → Advisors). Advisors may read code for evidence but only return methods and advice — they never edit files or run commands. The session switch lives in the model menu and is off by default.",
+    "detail": "docs/DETAIL.md"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "name": "dsh-agnes",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Agnes AI 多模态接入 DeepSeek Harness：生图（文生图/图生图/多图合成）+ 生视频（文生/首尾帧/参考素材）",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "lib/",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-tools": "*"
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "license": "MIT"
+}

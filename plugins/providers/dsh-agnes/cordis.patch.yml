@@ -1,0 +1,16 @@
+# dsh-agnes bundle patch：把 Agnes AI 的生图 / 生视频工具挂进 DSH。
+#
+# 纯 insert(id/name) 可以热挂载。
+# ⚠️ API key 不写在这里（patch 文件会被分享/提交），按下面的优先级取：
+#   1. 插件目录里的 agnes.config.json（本仓库同级，最省事）
+#   2. 环境变量 AGNES_API_KEY
+#   3. $DSH_HOME/agnes.config.json
+#   4. $DSH_PROFILE_DIR/agnes.config.json
+# 配置文件格式： { "apiKey": "sk-...", "baseUrl": "https://apihub.agnes-ai.com/v1" }
+- insert:
+    - id: dsh-agnes
+      name: dsh-agnes
+      config:
+        outputDir: agnes-out
+        imageModel: agnes-image-2.5-flash
+        videoModel: agnes-video-2.5

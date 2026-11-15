@@ -1,0 +1,31 @@
+{
+  "name": "dsh-thinking-guard",
+  "version": "0.1.0",
+  "description": "把第三方中转/模型塞进正文的 <thinking>…</thinking> 还原成 reasoning 块，避免「思考被当成最终答案」。",
+  "type": "module",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "reasoning",
+    "thinking"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.13.0"
+  }
+}

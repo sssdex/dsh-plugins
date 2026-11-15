@@ -4,6 +4,9 @@
 
 这里的工程都是本地 `link:` 加载、插件市场无法更新的自研件 —— 换句话说，**只有这份仓库是它们的上游**。
 
+> **关于重名**：`dsh-advisors`、`dsh-auth-cookie-guard`、`dsh-thinking-guard`、`dsh-agnes` 这四个在 npm 上有同名包，
+> 但那是别人发布的独立实现。本仓库里的版本是本地自研的，功能与本机工作流绑定，**不是同一份代码**。
+
 ---
 
 ## 插件 (plugins/)
@@ -25,6 +28,27 @@
 |---|---|---|
 | [dsh-token-tree](plugins/session/dsh-token-tree) | 0.1.0 | 父代理 + 全部子孙代理的 token 汇总，右侧栏面板按代理拆明细 |
 | [dsh-memory-switch](plugins/session/dsh-memory-switch) | 0.1.0 | 记忆注入的会话级开关，决定本会话是否让记忆系统注入摘要/召回/规则 |
+
+### `agents/` — 子智能体
+
+| 插件 | 版本 | 说明 |
+|---|---|---|
+| [dsh-advisors](plugins/agents/dsh-advisors) | 0.1.0 | 只读顾问子智能体：前端审美 / 建模 / 后端设计四个领域可各自指定模型，顾问只给方法不参与实施，带运行时只读守卫 |
+
+### `providers/` — 模型与能力接入
+
+| 插件 | 版本 | 说明 |
+|---|---|---|
+| [dsh-agnes](plugins/providers/dsh-agnes) | 0.1.0 | Agnes AI 多模态接入：`agnes_image` 生图（文生/图生/多图合成）、`agnes_video` 生视频（文生/首尾帧/参考素材）+ 任务轮询 |
+
+### `runtime/` — 运行时修复与防护
+
+这类插件不进则退：它们是绕过上游 bug 的补丁层，宿主版本升级后需要重新验证。
+
+| 插件 | 版本 | 说明 |
+|---|---|---|
+| [dsh-auth-cookie-guard](plugins/runtime/dsh-auth-cookie-guard) | 1.0.0 | 修 DSH 桌面端「启动即崩」：每次启动新增 `dsh-auth-*` cookie 且从不清理，累积到 71 条约 15.6KB 越过 Node 16KB 头上限触发 431。抬高头上限 + 种新 cookie 时批量删旧，稳态恒为 1 条 |
+| [dsh-thinking-guard](plugins/runtime/dsh-thinking-guard) | 0.1.0 | 把第三方中转塞进正文的 `<thinking>…</thinking>` 还原成 `reasoning` 块，让思考回到思考面板而不是当成最终答案 |
 
 ### `network/` — 网络
 
@@ -73,12 +97,38 @@
 
 ## 怎么用
 
-插件工程结构是标准的 DSH bundle（`package.json` + `cordis.patch.yml` + `lib/`），在你的 profile 里链接或安装后重启 DSH 生效：
+插件工程结构是标准的 DSH bundle（`package.json` + `cordis.patch.yml` + 入口 JS），在你的 profile 里链接后重启 DSH 生效：
 
-```bash
-dsh plugin --profile <你的 profile> add <本仓库里某个插件目录的路径或 git 地址>
+```jsonc
+// <DSH_HOME>/profiles/<profile>/package.json
+{
+  "dependencies": { "dsh-asr-tools": "link:D:\\path\\to\\dsh-asar-tools" },
+  "dsh": { "profile": { "bundles": [ /* ...其他 bundle... */, "dsh-asar-tools" ] } }
+}
 ```
+
+```powershell
+cd $env:DSH_HOME\profiles\<profile>
+pnpm install
+# 重启 DeepSeek Harness
+```
+
+> `link:` 会建目录联接指回源码，改代码不用重新复制。但宿主插件改完**必须重启**才生效：
+> profile 的 patch 改动可以被 HMR 热应用，已加载的 JS 模块不会重新 import。
 
 预设则按 YAML 方式载入，具体见各目录下的 README。
 
-> 这些是按个人工作流长出来的东西，没有做过通用性适配。拿走之前建议先读源码 —— 尤其是 `dsh-power-off`（会关机）、`dsh-client-patchguard`（会改已安装插件的 bundle）、`dsh-qq-hands`（会动 QQ 客户端）。
+---
+
+## 警示
+
+这些是按个人工作流长出来的东西，没有做过通用性适配。拿走之前建议先读源码 —— 尤其是：
+
+- **`dsh-power-off`** —— 真的会关机
+- **`dsh-client-patchguard`** —— 会改写已安装插件的客户端 bundle
+- **`dsh-qq-hands`** —— 会操作 QQ 客户端，可能涉及账号风险
+- **`dsh-auth-cookie-guard` / `dsh-thinking-guard`** —— 依赖对宿主内部实现的假设，宿主升级后可能失效甚至帮倒忙
+
+## License
+
+未指定。这些是私人工具，取用前请自行评估。

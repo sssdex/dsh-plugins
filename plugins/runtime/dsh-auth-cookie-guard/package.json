@@ -1,0 +1,41 @@
+{
+  "name": "dsh-auth-cookie-guard",
+  "version": "1.0.0",
+  "description": "根治 DSH 桌面端启动崩溃：每次启动都会新增一条按端口命名的 dsh-auth-* cookie 且从不清理，累积到 71 条约 15.6KB 就会越过 Node 16KB 请求头上限触发 431，表现为 desktop welcome: Web authentication failed。本插件在宿主侧抬高头上限并在种新 cookie 时批量删除旧 cookie，稳态恒为 1 条。",
+  "type": "module",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "lib/guard.js",
+    "cordis.patch.yml",
+    "README.md",
+    "selftest.mjs"
+  ],
+  "exports": {
+    ".": "./index.js",
+    "./lib/guard.js": "./lib/guard.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "scripts": {
+    "test": "node selftest.mjs",
+    "status": "node index.js --status",
+    "prune": "node index.js --prune-db"
+  },
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "cookie",
+    "431",
+    "maxHeaderSize",
+    "startup-crash"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.13.0"
+  }
+}

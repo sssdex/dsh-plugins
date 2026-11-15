@@ -11,3 +11,11 @@ _evidence/
 *.tmp
 .env
 .env.*
+
+# 凭据与运行产物 —— 绝不入库
+**/agnes.config.json
+out/
+agnes-out/
+.gh-token
+*.pem
+*.key
