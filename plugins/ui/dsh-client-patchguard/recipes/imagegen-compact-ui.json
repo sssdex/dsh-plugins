@@ -1,0 +1,162 @@
+{
+  "id": "imagegen-compact-ui",
+  "title": "image-gen 输入栏生图按钮：紧凑化 + 纯图标（合成配方）",
+  "why": "两条原先是链式配方（compact 改尺寸→icon 去文字），上游一更新，第二级锚点就落在中间态上、必然失配。合成一条，直接以真正的上游原始文件为基线：① 22px 无边框幽灵控制 → ② 28×28 纯图标（999px、透明底、label-secondary、15px 图标）。文字与箭头都从悬停提示 / 菜单获得，aria-label 与 title 带当前 provider/渠道名。",
+  "package": "dsh-image-gen",
+  "file": "lib/client.js",
+  "testedWith": [
+    "0.11.1"
+  ],
+  "pristineSha256": "5CB03C0AFFCF1DA83FA29B5BD73291917606C5E14DACFCFDDDEF51FFBF5A830A",
+  "patchedSha256": "196769E13297597C8980FC7E0B103ED0C017BE96F850A53975FA255961122ACC",
+  "pristineMarkers": [
+    ".dsh-ig-pill-button{display:inline-flex;align-items:center;gap:5px;height:28px",
+    "max-width:150px"
+  ],
+  "appliedMarkers": [
+    ".dsh-ig-pill-button{display:inline-flex;align-items:center;justify-content:center;gap:0;width:28px;height:28px",
+    ".dsh-ig-pill-provider{display:none"
+  ],
+  "ops": [
+    {
+      "tag": "pill root 高度 28 → 22",
+      "old": ".dsh-ig-pill-root{position:relative;display:inline-flex;align-items:center;height:28px}",
+      "new": ".dsh-ig-pill-root{position:relative;display:inline-flex;align-items:center;height:22px}"
+    },
+    {
+      "tag": "pill button: 带边框 28px 胶囊 → 无边框 22px 幽灵控制",
+      "old": ".dsh-ig-pill-button{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 9px 0 8px;border:1px solid var(--dsw-alias-border-l2,#e5e7eb);border-radius:14px;background:var(--dsw-alias-bg-layer-3,#fff);color:var(--dsw-alias-label-secondary,#4b5563);font:inherit;font-size:13px;line-height:20px;cursor:pointer;transition:border-color .15s,background .15s,color .15s;-webkit-user-select:none;user-select:none}",
+      "new": ".dsh-ig-pill-button{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 6px;border:0;border-radius:var(--dsw-radius-sm,8px);background:transparent;color:var(--dsw-alias-label-tertiary,#6b7280);font:inherit;font-size:12px;line-height:18px;cursor:pointer;transition:background .15s,color .15s;-webkit-user-select:none;user-select:none}"
+    },
+    {
+      "tag": "pill hover: 描边 → 幽灵底色",
+      "old": ".dsh-ig-pill-button:hover:not(:disabled){border-color:var(--dsw-alias-label-dimmed,#9ca3af);color:var(--dsw-alias-label-primary,#111827)}",
+      "new": ".dsh-ig-pill-button:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover,rgba(128,128,128,.14));color:var(--dsw-alias-label-secondary,#4b5563)}"
+    },
+    {
+      "tag": "pill open: 描边 → 幽灵底色",
+      "old": ".dsh-ig-pill-button-open{border-color:var(--dsw-alias-brand-primary,#4c78ff);color:var(--dsw-alias-label-primary,#111827)}",
+      "new": ".dsh-ig-pill-button-open{background:var(--dsw-alias-interactive-bg-hover,rgba(128,128,128,.14));color:var(--dsw-alias-label-primary,#111827)}"
+    },
+    {
+      "tag": "pill icon: 品牌蓝 → currentColor",
+      "old": ".dsh-ig-pill-icon{flex:none;color:var(--dsw-alias-brand-primary,#4c78ff)}",
+      "new": ".dsh-ig-pill-icon{flex:none;color:currentColor;opacity:.85}"
+    },
+    {
+      "tag": "pill provider 文本上限: 150px → 96px",
+      "old": ".dsh-ig-pill-provider{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      "new": ".dsh-ig-pill-provider{max-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}"
+    },
+    {
+      "tag": "窄容器: 收窄内边距 + 文字上限",
+      "old": "  .dsh-ig-pill-button{padding:0 7px 0 6px}",
+      "new": "  .dsh-ig-pill-button{padding:0 5px}\n  .dsh-ig-pill-provider{max-width:72px}"
+    },
+    {
+      "tag": "menu 面板: 320px → 280px，内边距 6 → 5",
+      "old": ".dsh-ig-pill-menu{position:fixed;z-index:1000;min-width:264px;max-width:min(320px,calc(100vw - 24px));padding:6px;border:1px solid var(--dsw-alias-border-l2,#e5e7eb);border-radius:12px;background:var(--dsw-alias-bg-layer-3,#fff);box-shadow:0 12px 32px rgba(0,0,0,.16),0 2px 8px rgba(0,0,0,.08);max-height:min(320px,calc(100vh - 48px));overflow-y:auto}",
+      "new": ".dsh-ig-pill-menu{position:fixed;z-index:1000;min-width:228px;max-width:min(280px,calc(100vw - 24px));padding:5px;border:1px solid var(--dsw-alias-border-l2,#e5e7eb);border-radius:10px;background:var(--dsw-alias-bg-layer-3,#fff);box-shadow:0 12px 32px rgba(0,0,0,.16),0 2px 8px rgba(0,0,0,.08);max-height:min(300px,calc(100vh - 48px));overflow-y:auto}"
+    },
+    {
+      "tag": "menu 标题: 收紧留白与字号",
+      "old": ".dsh-ig-pill-menu-title{padding:6px 8px 4px;font-size:11px;font-weight:600;color:var(--dsw-alias-label-tertiary,#6b7280)}",
+      "new": ".dsh-ig-pill-menu-title{padding:4px 7px 3px;font-size:10.5px;font-weight:600;letter-spacing:.02em;color:var(--dsw-alias-label-tertiary,#6b7280)}"
+    },
+    {
+      "tag": "menu 行: 7px → 5px 内边距",
+      "old": ".dsh-ig-pill-option{display:flex;width:100%;align-items:center;gap:9px;padding:7px 8px;border:0;border-radius:8px;background:none;font:inherit;color:inherit;text-align:left;cursor:pointer}",
+      "new": ".dsh-ig-pill-option{display:flex;width:100%;align-items:center;gap:8px;padding:5px 7px;border:0;border-radius:7px;background:none;font:inherit;color:inherit;text-align:left;cursor:pointer}"
+    },
+    {
+      "tag": "menu 行名: 12.5px → 12px",
+      "old": ".dsh-ig-pill-option-name{font-size:12.5px;font-weight:500;color:var(--dsw-alias-label-primary,#111827);line-height:1.2}",
+      "new": ".dsh-ig-pill-option-name{font-size:12px;font-weight:500;color:var(--dsw-alias-label-primary,#111827);line-height:1.25}"
+    },
+    {
+      "tag": "menu 行副标题: 11px → 10.5px",
+      "old": ".dsh-ig-pill-option-sub{font-size:11px;color:var(--dsw-alias-label-tertiary,#6b7280);line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      "new": ".dsh-ig-pill-option-sub{font-size:10.5px;color:var(--dsw-alias-label-tertiary,#6b7280);line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}"
+    },
+    {
+      "tag": "menu 模型行缩进: 24 → 20",
+      "old": ".dsh-ig-pill-model-option{padding-left:24px}",
+      "new": ".dsh-ig-pill-model-option{padding-left:20px}"
+    },
+    {
+      "tag": "menu 模型名: 12px → 11.5px",
+      "old": ".dsh-ig-pill-model-name{flex:1;min-width:0;font-size:12px;color:var(--dsw-alias-label-secondary,#4b5563);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      "new": ".dsh-ig-pill-model-name{flex:1;min-width:0;font-size:11.5px;color:var(--dsw-alias-label-secondary,#4b5563);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}"
+    },
+    {
+      "tag": "pill icon svg: 13 → 12",
+      "old": "className: \"dsh-ig-pill-icon\",\n\t\t\t\t\t\t\twidth: \"13\",\n\t\t\t\t\t\t\theight: \"13\",",
+      "new": "className: \"dsh-ig-pill-icon\",\n\t\t\t\t\t\t\twidth: \"12\",\n\t\t\t\t\t\t\theight: \"12\","
+    },
+    {
+      "tag": "pill caret svg: 10 → 9",
+      "old": "width: \"10\",\n\t\t\t\t\t\t\t\theight: \"10\",",
+      "new": "width: \"9\",\n\t\t\t\t\t\t\t\theight: \"9\","
+    },
+    {
+      "tag": "pill root 高度 22 → 28",
+      "old": ".dsh-ig-pill-root{position:relative;display:inline-flex;align-items:center;height:22px}",
+      "new": ".dsh-ig-pill-root{position:relative;display:inline-flex;align-items:center;height:28px}"
+    },
+    {
+      "tag": "pill button: 22px 文字胶囊 → 28×28 纯图标按钮",
+      "old": ".dsh-ig-pill-button{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 6px;border:0;border-radius:var(--dsw-radius-sm,8px);background:transparent;color:var(--dsw-alias-label-tertiary,#6b7280);font:inherit;font-size:12px;line-height:18px;cursor:pointer;transition:background .15s,color .15s;-webkit-user-select:none;user-select:none}",
+      "new": ".dsh-ig-pill-button{display:inline-flex;align-items:center;justify-content:center;gap:0;width:28px;height:28px;padding:0;border:0;border-radius:999px;background:transparent;color:var(--dsw-alias-label-secondary,#4b5563);font:inherit;cursor:pointer;transition:background .15s,color .15s;-webkit-user-select:none;user-select:none}"
+    },
+    {
+      "tag": "pill icon: 去掉 opacity，跟随 currentColor",
+      "old": ".dsh-ig-pill-icon{flex:none;color:currentColor;opacity:.85}",
+      "new": ".dsh-ig-pill-icon{flex:none;color:currentColor}"
+    },
+    {
+      "tag": "pill provider 文本：隐藏",
+      "old": ".dsh-ig-pill-provider{max-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      "new": ".dsh-ig-pill-provider{display:none}"
+    },
+    {
+      "tag": "pill caret：隐藏（含旋转过渡一并去掉）",
+      "old": ".dsh-ig-pill-caret{display:inline-flex;flex:none;transition:transform .15s}\n.dsh-ig-pill-caret-open{transform:rotate(180deg)}",
+      "new": ".dsh-ig-pill-caret{display:none}\n.dsh-ig-pill-caret-open{display:none}"
+    },
+    {
+      "tag": "容器查询：文字/箭头隐藏后，这三条规则已无对象（整块换成说明注释）",
+      "old": "@container (max-width:700px){\n  .dsh-ig-pill-caret{display:none}\n  .dsh-ig-pill-button{padding:0 5px}\n  .dsh-ig-pill-provider{max-width:72px}\n}\n",
+      "new": "/* 本地补丁：按钮已改为纯图标，文字与箭头常隐，原来针对它们的容器查询规则一并移除了。 */\n"
+    },
+    {
+      "tag": "pill icon svg: 12 → 15",
+      "old": "className: \"dsh-ig-pill-icon\",\n\t\t\t\t\t\t\twidth: \"12\",\n\t\t\t\t\t\t\theight: \"12\",",
+      "new": "className: \"dsh-ig-pill-icon\",\n\t\t\t\t\t\t\twidth: \"16\",\n\t\t\t\t\t\t\theight: \"16\","
+    },
+    {
+      "tag": "pill button: 补 aria-label（带当前 provider/渠道名）",
+      "old": "\t\t\t\t\ttitle: writable ? t(\"menuTitle\") : t(\"readOnly\"),\n\t\t\t\t\tdisabled: !writable,",
+      "new": "\t\t\t\t\ttitle: t(\"menuTitle\") + \"：\" + pillButtonLabel(current, PILL_PROVIDER_LABELS[lang][current], snapshot.value, currentChannel?.label) + (writable ? \"\" : \"（\" + t(\"readOnly\") + \"）\"),\n\t\t\t\t\t\"aria-label\": t(\"menuTitle\") + \"：\" + pillButtonLabel(current, PILL_PROVIDER_LABELS[lang][current], snapshot.value, currentChannel?.label),\n\t\t\t\t\tdisabled: !writable,"
+    },
+    {
+      "tag": "生图图标描边 1.6 → 1.5（与宿主 16px 图标一致）",
+      "old": "className: \"dsh-ig-pill-icon\",\n\t\t\t\t\t\t\twidth: \"16\",\n\t\t\t\t\t\t\theight: \"16\",\n\t\t\t\t\t\t\tviewBox: \"0 0 16 16\",\n\t\t\t\t\t\t\tfill: \"none\",\n\t\t\t\t\t\t\tstroke: \"currentColor\",\n\t\t\t\t\t\t\tstrokeWidth: \"1.6\",",
+      "new": "className: \"dsh-ig-pill-icon\",\n\t\t\t\t\t\t\twidth: \"16\",\n\t\t\t\t\t\t\theight: \"16\",\n\t\t\t\t\t\t\tviewBox: \"0 0 16 16\",\n\t\t\t\t\t\t\tfill: \"none\",\n\t\t\t\t\t\t\tstroke: \"currentColor\",\n\t\t\t\t\t\t\tstrokeWidth: \"1.5\","
+    },
+    {
+      "tag": "展开态：只换底色，不再把图标提亮到 label-primary（与相邻两个按钮同色）",
+      "old": ".dsh-ig-pill-button-open{background:var(--dsw-alias-interactive-bg-hover,rgba(128,128,128,.14));color:var(--dsw-alias-label-primary,#111827)}",
+      "new": ".dsh-ig-pill-button-open{background:var(--dsw-alias-interactive-bg-hover,rgba(128,128,128,.14));color:var(--dsw-alias-label-secondary,#4b5563)}"
+    },
+    {
+      "tag": "覆盖皮肤 button[aria-haspopup=menu] 的染色，图标颜色统一 label-secondary",
+      "old": ".dsh-ig-pill-icon{flex:none;color:currentColor}",
+      "new": ".dsh-ig-pill-icon{flex:none;color:currentColor}\n/* 本地补丁：皮肤主题用 button[aria-haspopup=menu] 把本按钮染成 label-primary，\n   与相邻两个 composer 按钮不一致。这里以同等特异度把它拉回 label-secondary。 */\nbutton.dsh-ig-pill-button,button.dsh-ig-pill-button:hover:not(:disabled),\nbutton.dsh-ig-pill-button.dsh-ig-pill-button-open{color:var(--dsw-alias-label-secondary,#4b5563)!important}"
+    },
+    {
+      "tag": "工具条容器 gap 12 → 5（结构性统一间距，替代三个插件各自负 margin）",
+      "old": ".dsh-ig-pill-icon{flex:none;color:currentColor}\n",
+      "new": ".dsh-ig-pill-icon{flex:none;color:currentColor}\n/* 本地补丁：宿主工具条 .standardControls 的 gap 是 12px，三个插件按钮各自用负 margin\n   去凑很容易被别的规则覆盖、也不跨 slot 边界生效。这里直接把容器 gap 收到 5px，\n   三个插件按钮与右侧模型选择器就必然等距，插件侧不再需要任何负 margin。 */\ndiv[class*=\"_standardControls\"]{gap:5px !important}\n"
+    }
+  ]
+}

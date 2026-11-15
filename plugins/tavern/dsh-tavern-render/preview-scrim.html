@@ -1,0 +1,998 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<title>酒馆回话 · 垫底方案对比</title>
+<style>
+html, body { margin: 0; background: #06090f; }
+body {
+  padding: 22px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: #cfd8e6;
+}
+.col { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.colhead { display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; padding: 0 2px; }
+.badge {
+  display: inline-grid; place-items: center;
+  width: 20px; height: 20px; border-radius: 5px;
+  background: #1b2537; border: 1px solid #2e3d55;
+  font: 700 11px/1 ui-monospace, monospace; color: #8fb4e8;
+}
+.colhead strong { font-size: 13px; color: #e6edf7; font-weight: 600; }
+.note { font-size: 11px; color: #6b7a90; }
+.stage { flex: 1; border-radius: 12px; overflow: hidden; border: 1px solid #1b2537; }
+.wall {
+  
+background-color: #0a1020;
+background-image:
+  radial-gradient(ellipse 46% 30% at 78% 8%, rgba(255, 214, 150, 0.55), transparent 70%),
+  radial-gradient(ellipse 30% 22% at 12% 26%, rgba(120, 170, 240, 0.16), transparent 72%),
+  radial-gradient(ellipse 60% 34% at 50% 96%, rgba(90, 130, 200, 0.14), transparent 74%),
+  repeating-linear-gradient(96deg, rgba(255,255,255,0.028) 0 2px, transparent 2px 9px),
+  linear-gradient(168deg, #16233d 0%, #0d1730 46%, #070d1c 100%);
+
+  padding: 26px 22px 34px;
+  min-height: 620px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+.msg { width: 100%; max-width: 460px; }
+/* 让渲染块在壁纸上呈现，颜色走主题变量（暗色） */
+.wall { --dsw-alias-label-primary: #eef2f8; --dsw-alias-label-secondary: #b9c4d4; --dsw-alias-label-tertiary: #8a97a9; }
+
+/* ═══════════════ 主题变量 ═══════════════ */
+body:where([data-dsh-tavern-render]) {
+  /* 全部正文共用宿主自己的正文字体。
+   * 之前给对白单独配了 Georgia / Songti SC / Noto Serif CJK 的衬线栈，
+   * 但 Windows 上那几个中文字体根本不存在，回退到系统宋体，小字号下发虚发丑。
+   * 现在统一用 --dsh-font-family（宿主已经在 body 上设好），中文英文都跟界面一致。 */
+  --tt-font-prose: var(--dsh-font-family, var(--dsw-font-family, inherit));
+
+  /* 对白：楷体。本机实测存在（楷体 / KaiTi / STKaiti 三档兜底，
+   * 前两个 Windows 自带，第三个是 macOS 名字，都取不到才退到 serif）。
+   * 字号与旁白完全相同 —— 只换字体和颜色，不放大。 */
+  --tt-font-dialog: "楷体", "KaiTi", "STKaiti", var(--dsh-font-family, serif);
+
+  --tt-font-mono: var(--ds-font-family-code, ui-monospace, "Cascadia Code", Consolas, monospace);
+
+  /* 对白不再放大 —— 字号和行高都与正文一致。 */
+  --tt-prose-size: 15px;
+  --tt-prose-line: 1.95;
+  --tt-meta-size: 12px;
+  --tt-title-size: 11.5px;
+
+  --tt-narration: var(--dsw-alias-label-primary, #d8dee9);
+  --tt-narration-soft: var(--dsw-alias-label-secondary, #aeb8c6);
+
+  /* 对白：暖琥珀。不刺眼、夜间友好，和正文灰白有区分但不打架。 */
+  --tt-dialog: #e0b878;
+  --tt-dialog-bg: transparent;
+  --tt-dialog-border: rgba(224, 184, 120, 0.42);
+
+  /* 动作/神态：只降成次要色 + 斜体，不铺底色块（主人指定）。 */
+  --tt-action: var(--dsw-alias-label-secondary, #aeb8c6);
+  --tt-action-soft: transparent;
+
+  --tt-surface: var(--dsw-alias-markdown-code-block, rgba(255, 255, 255, 0.045));
+  --tt-surface-2: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03));
+  --tt-border: var(--dsw-alias-border-l1, rgba(255, 255, 255, 0.12));
+  --tt-radius: 12px;
+
+  --tt-accent: #7fb2e8;
+  --tt-warm: #e5b567;
+  --tt-pink: #e88fa8;
+  --tt-blue: #7fb2e8;
+  --tt-violet: #b39ddb;
+  --tt-green: #8fd694;
+  --tt-dim: var(--dsw-alias-label-tertiary, #8b95a5);
+}
+
+/* 亮色主题（宿主没有 dark 标记时） */
+body:where([data-dsh-tavern-render]):not([data-ds-dark-theme]) {
+  /* 浅底上琥珀色会糊，换成同色系的深琥珀/赭石，观感一致且够对比度。 */
+  --tt-dialog: #a9762a;
+  --tt-dialog-bg: transparent;
+  --tt-dialog-border: rgba(169, 118, 42, 0.38);
+  --tt-action: var(--dsw-alias-label-secondary, rgba(15, 30, 60, 0.62));
+  --tt-action-soft: transparent;
+  --tt-surface: rgba(15, 30, 60, 0.035);
+  --tt-surface-2: rgba(15, 30, 60, 0.02);
+  --tt-border: rgba(15, 30, 60, 0.12);
+  --tt-accent: #2a6db5;
+  --tt-warm: #b47d1e;
+  --tt-pink: #c04a67;
+  --tt-blue: #2a6db5;
+  --tt-violet: #6a4fa8;
+  --tt-green: #2e7d32;
+  --tt-dim: rgba(15, 30, 60, 0.52);
+}
+
+/* ═══════════════ 根容器 ═══════════════ */
+.tt-root {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font-family: var(--tt-font-prose);
+  color: var(--tt-narration);
+}
+
+/* ═══════════════ 正文：旁白 / 对白 / 动作 ═══════════════ */
+.tt-prose {
+  font-size: var(--tt-prose-size);
+  line-height: var(--tt-prose-line);
+  letter-spacing: 0.012em;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.tt-narration {
+  color: var(--tt-narration);
+}
+
+/* 对白：换楷体 + 暖琥珀色，字号与旁白完全一致（不放大）。
+ * 左侧竖线保留，作为「这段是说的」的第二个提示；不铺底色块。 */
+/* 对白：楷体 + 暖琥珀，靠字色与字体区分。
+ * 早前用过 border-left 做「竖线提示」，但内联元素换行时
+ * box-decoration-break: clone 会在**每一行**行首各画一条竖线，
+ * 长对白里就变成一串竖线，反而更脏。改成纯字体+颜色。 */
+.tt-speech {
+  color: var(--tt-dialog);
+  font-family: var(--tt-font-dialog);
+  font-size: inherit;
+  line-height: inherit;
+  letter-spacing: 0.02em;
+  background: var(--tt-dialog-bg);
+  padding: 0 2px;
+}
+
+.tt-speech-inner { font-style: normal; }
+
+/* 动作 / 神态：淡色斜体，不铺底色（主人指定「不要色块」）。 */
+.tt-action {
+  color: var(--tt-action);
+  font-style: italic;
+  font-size: inherit;
+  background: var(--tt-action-soft);
+  padding: 0 1px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* ═══════════════ 分区通用标题 ═══════════════ */
+.tt-section-title {
+  font-size: var(--tt-title-size);
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--tt-dim);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tt-section-title::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--tt-border), transparent);
+}
+
+/* ═══════════════ 元信息 ═══════════════ */
+.tt-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--tt-meta-size);
+  font-family: var(--tt-font-mono);
+  color: var(--tt-dim);
+  border: 1px dashed var(--tt-border);
+  border-radius: 999px;
+  padding: 3px 12px;
+  align-self: flex-start;
+}
+.tt-meta-label {
+  color: var(--tt-accent);
+  opacity: 0.85;
+  letter-spacing: 0.08em;
+}
+
+/* ═══════════════ 状态栏：可视化卡片 ═══════════════ */
+.tt-status {
+  border: 1px solid var(--tt-border);
+  border-radius: var(--tt-radius);
+  background: var(--tt-surface);
+  padding: 12px 14px 14px;
+}
+
+.tt-status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px;
+  align-items: start;
+}
+
+.tt-char {
+  border: 1px solid var(--tt-border);
+  border-radius: 10px;
+  background: var(--tt-surface-2);
+  padding: 10px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tt-char-name {
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--tt-warm);
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--tt-border);
+}
+
+.tt-char-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.tt-field { display: inline-flex; }
+
+/* 数值字段：环 + 数字 */
+.tt-field-num { align-items: center; }
+
+.tt-gauge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--tt-font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--tt-accent);
+}
+.tt-gauge-ring {
+  --p: calc(var(--tt-gauge) * 1%);
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background:
+    conic-gradient(var(--tt-accent) var(--p), var(--tt-border) 0);
+  mask: radial-gradient(farthest-side, transparent calc(100% - 3.5px), #000 calc(100% - 3.5px));
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3.5px), #000 calc(100% - 3.5px));
+  flex: none;
+}
+.tt-gauge-text { color: var(--tt-narration); }
+.tt-gauge-label {
+  font-family: var(--tt-font-prose);
+  font-size: 10.5px;
+  font-weight: 400;
+  color: var(--tt-dim);
+  letter-spacing: 0.05em;
+}
+
+.tt-num {
+  font-family: var(--tt-font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--tt-warm);
+  background: var(--tt-surface);
+  border: 1px solid var(--tt-border);
+  border-radius: 999px;
+  padding: 1px 9px;
+}
+
+/* 长描述字段：独占一行 */
+.tt-field-text {
+  flex: 1 1 100%;
+  font-size: 12.5px;
+  line-height: 1.62;
+  color: var(--tt-narration);
+  opacity: 0.88;
+  background: var(--tt-surface);
+  border-left: 2px solid var(--tt-border);
+  border-radius: 0 6px 6px 0;
+  padding: 4px 9px;
+}
+
+/* 短标签：名字 + 值 */
+.tt-field-tag {
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--tt-blue);
+  background: var(--tt-surface);
+  border: 1px solid var(--tt-border);
+  border-radius: 6px;
+  padding: 2px 8px;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.tt-tag-label {
+  font-size: 10px;
+  color: var(--tt-dim);
+  letter-spacing: 0.06em;
+}
+.tt-tag-value { color: var(--tt-blue); font-weight: 500; }
+
+/* 数值标签（非 0-100 的数值） */
+.tt-num-label {
+  font-size: 10px;
+  color: var(--tt-dim);
+  margin-left: 4px;
+  letter-spacing: 0.05em;
+}
+
+/* 长描述：带字段名 */
+.tt-text-label {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--tt-warm);
+  margin-right: 7px;
+  vertical-align: 1px;
+  white-space: nowrap;
+}
+
+/* 心声：斜体引用块，与属性区分 */
+.tt-char-inner {
+  font-size: 12.5px;
+  line-height: 1.68;
+  font-style: italic;
+  color: var(--tt-narration);
+  opacity: 0.82;
+  background: var(--tt-surface);
+  border-left: 2px solid var(--tt-violet);
+  border-radius: 0 6px 6px 0;
+  padding: 5px 10px;
+  margin-top: 2px;
+}
+
+/* 媒体文件名：等宽、弱化、小图钉 */
+.tt-field-media {
+  font-family: var(--tt-font-mono);
+  font-size: 10.5px;
+  color: var(--tt-dim);
+  border: 1px dashed var(--tt-border);
+  border-radius: 5px;
+  padding: 1px 6px;
+  opacity: 0.85;
+}
+
+/* ═══════════════ 社交动态 ═══════════════ */
+.tt-social {
+  border: 1px solid var(--tt-border);
+  border-radius: var(--tt-radius);
+  background: var(--tt-surface);
+  padding: 12px 14px 14px;
+}
+.tt-post {
+  border-left: 2px solid var(--tt-pink);
+  border-radius: 0 8px 8px 0;
+  background: var(--tt-surface-2);
+  padding: 9px 12px;
+  margin-top: 8px;
+}
+.tt-post-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.tt-post-name {
+  font-weight: 700;
+  font-size: 13.5px;
+  color: var(--tt-pink);
+}
+.tt-post-handle {
+  font-family: var(--tt-font-mono);
+  font-size: 11px;
+  color: var(--tt-dim);
+}
+.tt-social-stats {
+  font-family: var(--tt-font-mono);
+  font-size: 10.5px;
+  color: var(--tt-warm);
+  margin-left: auto;
+  border: 1px solid var(--tt-border);
+  border-radius: 999px;
+  padding: 0 8px;
+}
+.tt-post-text {
+  font-size: 13.5px;
+  line-height: 1.78;
+  margin: 0;
+  color: var(--tt-narration);
+}
+.tt-social-append {
+  margin-top: 7px;
+  font-size: 12px;
+  line-height: 1.65;
+  color: var(--tt-narration-soft);
+  border-left: 2px dashed var(--tt-border);
+  padding-left: 9px;
+}
+.tt-social-extra {
+  display: flex;
+  gap: 7px;
+  margin-top: 7px;
+  flex-wrap: wrap;
+}
+.tt-social-extra > span {
+  font-family: var(--tt-font-mono);
+  font-size: 10.5px;
+  color: var(--tt-dim);
+  border: 1px solid var(--tt-border);
+  border-radius: 999px;
+  padding: 0 8px;
+}
+
+/* ═══════════════ 聊天消息 ═══════════════ */
+.tt-chat {
+  border: 1px solid var(--tt-border);
+  border-radius: var(--tt-radius);
+  background: var(--tt-surface);
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.tt-chat-time {
+  font-family: var(--tt-font-mono);
+  font-size: 10.5px;
+  color: var(--tt-dim);
+}
+.tt-bubble {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  background: var(--tt-surface-2);
+  border: 1px solid var(--tt-border);
+  border-radius: 4px 12px 12px 12px;
+  padding: 6px 11px;
+}
+.tt-bubble-from {
+  flex: none;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--tt-blue);
+  letter-spacing: 0.05em;
+}
+.tt-bubble-text {
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--tt-narration);
+  overflow-wrap: anywhere;
+}
+
+/* ═══════════════ 推荐 / 列表 ═══════════════ */
+.tt-feed {
+  border: 1px solid var(--tt-border);
+  border-radius: var(--tt-radius);
+  background: var(--tt-surface);
+  padding: 12px 14px 14px;
+}
+.tt-feed-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.tt-feed-list > li {
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--tt-narration-soft);
+  padding-left: 14px;
+  position: relative;
+}
+.tt-feed-list > li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 0.72em;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--tt-warm);
+  opacity: 0.7;
+}
+.tt-feed[data-variant="bilibili"] .tt-feed-list > li::before { background: var(--tt-pink); }
+
+/* ═══════════════ 选项：可点击的卡片 ═══════════════ */
+.tt-choices {
+  border: 1px solid var(--tt-border);
+  border-radius: var(--tt-radius);
+  background: linear-gradient(160deg, var(--tt-surface), transparent);
+  padding: 12px 14px 14px;
+}
+.tt-choices-hint {
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: var(--tt-dim);
+  opacity: 0.75;
+  text-transform: none;
+  margin-left: 4px;
+}
+.tt-choice-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  counter-reset: none;
+}
+.tt-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border: 1px solid var(--tt-border);
+  border-radius: 9px;
+  background: var(--tt-surface-2);
+  padding: 8px 12px;
+  transition: border-color 0.14s, background 0.14s, transform 0.14s, opacity 0.14s;
+  cursor: pointer;
+  user-select: none;
+}
+.tt-choice:hover {
+  border-color: var(--tt-accent);
+  background: var(--tt-dialog-bg);
+  transform: translateX(2px);
+}
+.tt-choice:focus-visible {
+  outline: 2px solid var(--tt-accent);
+  outline-offset: 1px;
+}
+/* 发送中：整组变暗并禁止再点 */
+.tt-choice-busy {
+  opacity: 0.45;
+  cursor: progress;
+}
+.tt-choice-sending {
+  border-color: var(--tt-warm);
+  opacity: 1;
+}
+/* 发送成功：勾一下，明确「已经替你发出去了」 */
+.tt-choice-sent {
+  border-color: var(--tt-warm);
+  opacity: 1;
+}
+.tt-choice-sent .tt-choice-index::after {
+  content: "✓";
+  position: absolute;
+  opacity: 0;
+}
+.tt-choice-sent .tt-choice-index {
+  color: var(--tt-warm);
+  border-color: var(--tt-warm);
+}
+/* 发送失败：短暂标红 */
+.tt-choice-failed {
+  border-color: #e0716f !important;
+  background: rgba(224, 113, 111, 0.10) !important;
+  opacity: 1 !important;
+}
+.tt-choice-index {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-family: var(--tt-font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--tt-accent);
+  border: 1px solid var(--tt-accent);
+  opacity: 0.9;
+  margin-top: 1px;
+}
+.tt-choice-text {
+  font-size: 13.5px;
+  line-height: 1.72;
+  color: var(--tt-narration);
+  overflow-wrap: anywhere;
+}
+
+/* ═══════════════ 平台内容块（peachhub） ═══════════════ */
+.tt-hub {
+  border: 1px solid var(--tt-border);
+  border-radius: var(--tt-radius);
+  background: var(--tt-surface);
+  padding: 12px 14px 14px;
+}
+.tt-hub-card {
+  border-left: 2px solid var(--tt-pink);
+  border-radius: 0 8px 8px 0;
+  background: var(--tt-surface-2);
+  padding: 10px 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.tt-hub-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--tt-pink);
+  letter-spacing: 0.02em;
+}
+.tt-hub-params {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.tt-hub-param {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  border: 1px solid var(--tt-border);
+  border-radius: 999px;
+  background: var(--tt-surface);
+  padding: 1px 9px;
+}
+.tt-hub-param-label {
+  font-size: 10px;
+  color: var(--tt-dim);
+  letter-spacing: 0.05em;
+}
+.tt-hub-param-value {
+  font-family: var(--tt-font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--tt-warm);
+}
+.tt-hub-desc {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.78;
+  color: var(--tt-narration);
+  white-space: pre-wrap;
+}
+.tt-hub-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.tt-hub-tag {
+  font-size: 11px;
+  color: var(--tt-blue);
+  background: var(--tt-surface);
+  border: 1px solid var(--tt-border);
+  border-radius: 6px;
+  padding: 1px 7px;
+}
+.tt-hub-comments {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-top: 1px dashed var(--tt-border);
+  padding-top: 7px;
+}
+.tt-hub-comment {
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--tt-narration-soft);
+}
+
+/* ═══════════════ 窄屏 ═══════════════ */
+@media (max-width: 560px) {
+  body:where([data-dsh-tavern-render]) {
+    --tt-prose-size: 14.5px;
+  }
+  .tt-status-grid { grid-template-columns: 1fr; }
+}
+
+/* 尊重「减少动态效果」 */
+@media (prefers-reduced-motion: reduce) {
+  .tt-choice { transition: none; }
+  .tt-choice:hover { transform: none; }
+}
+
+
+/* ── 方案 A ── */
+.wall.A {
+  --tt-veil: rgba(10, 14, 24, 0.46);
+  --tt-veil-blur: 0px;
+  --tt-veil-radius: 14px;
+  --tt-veil-rim: inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  --tt-veil-pad: 16px 20px;
+}
+
+.wall.A .tt-root {
+  background: var(--tt-veil);
+  -webkit-backdrop-filter: blur(var(--tt-veil-blur));
+  backdrop-filter: blur(var(--tt-veil-blur));
+  border-radius: var(--tt-veil-radius);
+  box-shadow: var(--tt-veil-rim);
+  padding: var(--tt-veil-pad);
+}
+
+
+
+
+
+
+/* ── 方案 B ── */
+.wall.B {
+  --tt-veil: rgba(12, 16, 27, 0.38);
+  --tt-veil-blur: 14px;
+  --tt-veil-radius: 16px;
+  --tt-veil-rim: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  --tt-veil-pad: 16px 20px;
+}
+
+.wall.B .tt-root {
+  background: var(--tt-veil);
+  -webkit-backdrop-filter: blur(var(--tt-veil-blur));
+  backdrop-filter: blur(var(--tt-veil-blur));
+  border-radius: var(--tt-veil-radius);
+  box-shadow: var(--tt-veil-rim);
+  padding: var(--tt-veil-pad);
+}
+
+
+
+
+
+
+/* ── 方案 C ── */
+.wall.C {
+  --tt-veil: transparent;
+  --tt-veil-blur: 0px;
+  --tt-veil-radius: 0px;
+  --tt-veil-rim: none;
+  --tt-veil-pad: 0;
+  --tt-inline-bg: rgba(10, 14, 24, 0.52);
+  --tt-inline-pad: 1px 5px;
+  --tt-inline-radius: 4px;
+}
+
+.wall.C .tt-root {
+  background: var(--tt-veil);
+  -webkit-backdrop-filter: blur(var(--tt-veil-blur));
+  backdrop-filter: blur(var(--tt-veil-blur));
+  border-radius: var(--tt-veil-radius);
+  box-shadow: var(--tt-veil-rim);
+  padding: var(--tt-veil-pad);
+}
+
+
+
+
+/* 方案 C：只给文字本身垫底（行内高亮） */
+.wall.C .tt-narration,
+.wall.C .tt-speech,
+.wall.C .tt-action {
+  background: var(--tt-inline-bg);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  padding: var(--tt-inline-pad);
+  border-radius: var(--tt-inline-radius);
+}
+.wall.C .tt-action { font-style: italic; }
+
+
+
+/* ── 方案 D ── */
+.wall.D {
+  --tt-veil: radial-gradient(120% 100% at 50% 42%, rgba(8, 12, 22, 0.72) 0%, rgba(8, 12, 22, 0.58) 42%, rgba(8, 12, 22, 0.24) 78%, rgba(8, 12, 22, 0) 100%);
+  --tt-veil-blur: 0px;
+  --tt-veil-radius: 0px;
+  --tt-veil-rim: none;
+  --tt-veil-pad: 20px 24px;
+  --tt-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55), 0 0 12px rgba(0, 0, 0, 0.35);
+}
+
+.wall.D .tt-root {
+  background: var(--tt-veil);
+  -webkit-backdrop-filter: blur(var(--tt-veil-blur));
+  backdrop-filter: blur(var(--tt-veil-blur));
+  border-radius: var(--tt-veil-radius);
+  box-shadow: var(--tt-veil-rim);
+  padding: var(--tt-veil-pad);
+}
+
+
+/* 方案 D：不给卡片，只在文字上加极轻投影托底 */
+.wall.D .tt-narration,
+.wall.D .tt-speech,
+.wall.D .tt-action {
+  text-shadow: var(--tt-text-shadow);
+}
+
+
+
+
+</style>
+</head>
+<body data-ds-dark-theme data-dsh-tavern-render>
+
+  <section class="col">
+    <header class="colhead">
+      <span class="badge">A</span>
+      <strong>柔光压暗</strong>
+      <span class="note">一块很淡的深色底，模糊极轻，边缘靠内高光勾出质感</span>
+    </header>
+    <div class="stage">
+      <div class="wall A">
+        <div class="msg"><div class="tt-root" data-dsh-tavern-render="1" data-tt-syntax="trs"><div class="tt-prose" data-origin="prose"><span class="tt-narration">雨敲在老旧公寓的窗框上，屋子里只有台灯一圈黄光。补课用的练习册摊了一桌，笔帽滚到桌沿，没人去捡。
+她趴在桌面上，制服的袖口卷到手肘，</span><span class="tt-action">校服领口的第二颗扣子早不知什么时候松了</span><span class="tt-narration">，露出一小截被灯光染成蜜色的锁骨。
+</span><span class="tt-speech">“<span class="tt-speech-inner">……老师，这道题我不会。</span>”</span><span class="tt-narration">她的手指在纸面上慢慢划过去，指尖停在空白处，然后抬眼看你，眼睫毛上还挂着一点湿气，</span><span class="tt-speech">“<span class="tt-speech-inner">讲了四遍了。你是不是觉得我很笨？</span>”</span><span class="tt-action">她把椅子往后一推，坐直了，膝盖并拢，裙摆压出一道很浅的褶</span><span class="tt-narration">。</span><span class="tt-speech">“<span class="tt-speech-inner">还是说——</span>”</span><span class="tt-narration">她声音放低，尾音拖着，</span><span class="tt-speech">“<span class="tt-speech-inner">你根本不想我学会。</span>”</span></div><div class="tt-meta"><span class="tt-meta-label">场景</span><span class="tt-meta-value">时间 20:47 雨夜 · 地点 补课公寓的小客厅</span></div><section class="tt-status" data-section="status">
+    <div class="tt-section-title">状态</div>
+    <div class="tt-status-grid"><div class="tt-char">
+      <div class="tt-char-name">她</div>
+      <div class="tt-char-body"><span class="tt-field tt-field-num" data-key="affection"><span class="tt-gauge" data-value="41">
+    <span class="tt-gauge-ring" style="--tt-gauge:41"></span>
+    <span class="tt-gauge-text">41</span>
+    <span class="tt-gauge-label">好感</span>
+  </span></span><span class="tt-field tt-field-num" data-key="reason"><span class="tt-gauge" data-value="27">
+    <span class="tt-gauge-ring" style="--tt-gauge:27"></span>
+    <span class="tt-gauge-text">27</span>
+    <span class="tt-gauge-label">理性</span>
+  </span></span><span class="tt-field tt-field-tag" data-key="mood">
+      <span class="tt-tag-label">心情</span><span class="tt-tag-value">试探而笃定</span>
+    </span><span class="tt-field tt-field-text" data-key="outfit">
+    <span class="tt-text-label">穿着</span>校服，领口松散，裙下是短袜
+  </span><span class="tt-field tt-field-tag" data-key="body">
+      <span class="tt-tag-label">身体</span><span class="tt-tag-value">身上带着雨水的凉</span>
+    </span></div>
+      <div class="tt-char-inner">心声：他不敢看我。可他也没走。</div>
+    </div></div>
+  </section><section class="tt-choices" data-section="choices">
+    <div class="tt-section-title">你的选择<small class="tt-choices-hint">点一下直接发送</small></div>
+    <ol class="tt-choice-list"><li class="tt-choice" data-tt-send="把笔捡起来，指着题目，正经讲第五遍" role="button" tabindex="0">
+    <span class="tt-choice-index">1</span>
+    <span class="tt-choice-text">把笔捡起来，指着题目，正经讲第五遍</span>
+  </li><li class="tt-choice" data-tt-send="把台灯转过去，让她看不清你的表情" role="button" tabindex="0">
+    <span class="tt-choice-index">2</span>
+    <span class="tt-choice-text">把台灯转过去，让她看不清你的表情</span>
+  </li></ol>
+  </section></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="col">
+    <header class="colhead">
+      <span class="badge">B</span>
+      <strong>毛玻璃</strong>
+      <span class="note">磨砂玻璃质感的卡片，壁纸被柔化成色块</span>
+    </header>
+    <div class="stage">
+      <div class="wall B">
+        <div class="msg"><div class="tt-root" data-dsh-tavern-render="1" data-tt-syntax="trs"><div class="tt-prose" data-origin="prose"><span class="tt-narration">雨敲在老旧公寓的窗框上，屋子里只有台灯一圈黄光。补课用的练习册摊了一桌，笔帽滚到桌沿，没人去捡。
+她趴在桌面上，制服的袖口卷到手肘，</span><span class="tt-action">校服领口的第二颗扣子早不知什么时候松了</span><span class="tt-narration">，露出一小截被灯光染成蜜色的锁骨。
+</span><span class="tt-speech">“<span class="tt-speech-inner">……老师，这道题我不会。</span>”</span><span class="tt-narration">她的手指在纸面上慢慢划过去，指尖停在空白处，然后抬眼看你，眼睫毛上还挂着一点湿气，</span><span class="tt-speech">“<span class="tt-speech-inner">讲了四遍了。你是不是觉得我很笨？</span>”</span><span class="tt-action">她把椅子往后一推，坐直了，膝盖并拢，裙摆压出一道很浅的褶</span><span class="tt-narration">。</span><span class="tt-speech">“<span class="tt-speech-inner">还是说——</span>”</span><span class="tt-narration">她声音放低，尾音拖着，</span><span class="tt-speech">“<span class="tt-speech-inner">你根本不想我学会。</span>”</span></div><div class="tt-meta"><span class="tt-meta-label">场景</span><span class="tt-meta-value">时间 20:47 雨夜 · 地点 补课公寓的小客厅</span></div><section class="tt-status" data-section="status">
+    <div class="tt-section-title">状态</div>
+    <div class="tt-status-grid"><div class="tt-char">
+      <div class="tt-char-name">她</div>
+      <div class="tt-char-body"><span class="tt-field tt-field-num" data-key="affection"><span class="tt-gauge" data-value="41">
+    <span class="tt-gauge-ring" style="--tt-gauge:41"></span>
+    <span class="tt-gauge-text">41</span>
+    <span class="tt-gauge-label">好感</span>
+  </span></span><span class="tt-field tt-field-num" data-key="reason"><span class="tt-gauge" data-value="27">
+    <span class="tt-gauge-ring" style="--tt-gauge:27"></span>
+    <span class="tt-gauge-text">27</span>
+    <span class="tt-gauge-label">理性</span>
+  </span></span><span class="tt-field tt-field-tag" data-key="mood">
+      <span class="tt-tag-label">心情</span><span class="tt-tag-value">试探而笃定</span>
+    </span><span class="tt-field tt-field-text" data-key="outfit">
+    <span class="tt-text-label">穿着</span>校服，领口松散，裙下是短袜
+  </span><span class="tt-field tt-field-tag" data-key="body">
+      <span class="tt-tag-label">身体</span><span class="tt-tag-value">身上带着雨水的凉</span>
+    </span></div>
+      <div class="tt-char-inner">心声：他不敢看我。可他也没走。</div>
+    </div></div>
+  </section><section class="tt-choices" data-section="choices">
+    <div class="tt-section-title">你的选择<small class="tt-choices-hint">点一下直接发送</small></div>
+    <ol class="tt-choice-list"><li class="tt-choice" data-tt-send="把笔捡起来，指着题目，正经讲第五遍" role="button" tabindex="0">
+    <span class="tt-choice-index">1</span>
+    <span class="tt-choice-text">把笔捡起来，指着题目，正经讲第五遍</span>
+  </li><li class="tt-choice" data-tt-send="把台灯转过去，让她看不清你的表情" role="button" tabindex="0">
+    <span class="tt-choice-index">2</span>
+    <span class="tt-choice-text">把台灯转过去，让她看不清你的表情</span>
+  </li></ol>
+  </section></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="col">
+    <header class="colhead">
+      <span class="badge">C</span>
+      <strong>行内垫底</strong>
+      <span class="note">只给文字本身垫一条淡底，壁纸几乎全部保留</span>
+    </header>
+    <div class="stage">
+      <div class="wall C">
+        <div class="msg"><div class="tt-root" data-dsh-tavern-render="1" data-tt-syntax="trs"><div class="tt-prose" data-origin="prose"><span class="tt-narration">雨敲在老旧公寓的窗框上，屋子里只有台灯一圈黄光。补课用的练习册摊了一桌，笔帽滚到桌沿，没人去捡。
+她趴在桌面上，制服的袖口卷到手肘，</span><span class="tt-action">校服领口的第二颗扣子早不知什么时候松了</span><span class="tt-narration">，露出一小截被灯光染成蜜色的锁骨。
+</span><span class="tt-speech">“<span class="tt-speech-inner">……老师，这道题我不会。</span>”</span><span class="tt-narration">她的手指在纸面上慢慢划过去，指尖停在空白处，然后抬眼看你，眼睫毛上还挂着一点湿气，</span><span class="tt-speech">“<span class="tt-speech-inner">讲了四遍了。你是不是觉得我很笨？</span>”</span><span class="tt-action">她把椅子往后一推，坐直了，膝盖并拢，裙摆压出一道很浅的褶</span><span class="tt-narration">。</span><span class="tt-speech">“<span class="tt-speech-inner">还是说——</span>”</span><span class="tt-narration">她声音放低，尾音拖着，</span><span class="tt-speech">“<span class="tt-speech-inner">你根本不想我学会。</span>”</span></div><div class="tt-meta"><span class="tt-meta-label">场景</span><span class="tt-meta-value">时间 20:47 雨夜 · 地点 补课公寓的小客厅</span></div><section class="tt-status" data-section="status">
+    <div class="tt-section-title">状态</div>
+    <div class="tt-status-grid"><div class="tt-char">
+      <div class="tt-char-name">她</div>
+      <div class="tt-char-body"><span class="tt-field tt-field-num" data-key="affection"><span class="tt-gauge" data-value="41">
+    <span class="tt-gauge-ring" style="--tt-gauge:41"></span>
+    <span class="tt-gauge-text">41</span>
+    <span class="tt-gauge-label">好感</span>
+  </span></span><span class="tt-field tt-field-num" data-key="reason"><span class="tt-gauge" data-value="27">
+    <span class="tt-gauge-ring" style="--tt-gauge:27"></span>
+    <span class="tt-gauge-text">27</span>
+    <span class="tt-gauge-label">理性</span>
+  </span></span><span class="tt-field tt-field-tag" data-key="mood">
+      <span class="tt-tag-label">心情</span><span class="tt-tag-value">试探而笃定</span>
+    </span><span class="tt-field tt-field-text" data-key="outfit">
+    <span class="tt-text-label">穿着</span>校服，领口松散，裙下是短袜
+  </span><span class="tt-field tt-field-tag" data-key="body">
+      <span class="tt-tag-label">身体</span><span class="tt-tag-value">身上带着雨水的凉</span>
+    </span></div>
+      <div class="tt-char-inner">心声：他不敢看我。可他也没走。</div>
+    </div></div>
+  </section><section class="tt-choices" data-section="choices">
+    <div class="tt-section-title">你的选择<small class="tt-choices-hint">点一下直接发送</small></div>
+    <ol class="tt-choice-list"><li class="tt-choice" data-tt-send="把笔捡起来，指着题目，正经讲第五遍" role="button" tabindex="0">
+    <span class="tt-choice-index">1</span>
+    <span class="tt-choice-text">把笔捡起来，指着题目，正经讲第五遍</span>
+  </li><li class="tt-choice" data-tt-send="把台灯转过去，让她看不清你的表情" role="button" tabindex="0">
+    <span class="tt-choice-index">2</span>
+    <span class="tt-choice-text">把台灯转过去，让她看不清你的表情</span>
+  </li></ol>
+  </section></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="col">
+    <header class="colhead">
+      <span class="badge">D</span>
+      <strong>影调压暗</strong>
+      <span class="note">无边框，像给壁纸打了一层柔光，只压暗文字所在的那一条</span>
+    </header>
+    <div class="stage">
+      <div class="wall D">
+        <div class="msg"><div class="tt-root" data-dsh-tavern-render="1" data-tt-syntax="trs"><div class="tt-prose" data-origin="prose"><span class="tt-narration">雨敲在老旧公寓的窗框上，屋子里只有台灯一圈黄光。补课用的练习册摊了一桌，笔帽滚到桌沿，没人去捡。
+她趴在桌面上，制服的袖口卷到手肘，</span><span class="tt-action">校服领口的第二颗扣子早不知什么时候松了</span><span class="tt-narration">，露出一小截被灯光染成蜜色的锁骨。
+</span><span class="tt-speech">“<span class="tt-speech-inner">……老师，这道题我不会。</span>”</span><span class="tt-narration">她的手指在纸面上慢慢划过去，指尖停在空白处，然后抬眼看你，眼睫毛上还挂着一点湿气，</span><span class="tt-speech">“<span class="tt-speech-inner">讲了四遍了。你是不是觉得我很笨？</span>”</span><span class="tt-action">她把椅子往后一推，坐直了，膝盖并拢，裙摆压出一道很浅的褶</span><span class="tt-narration">。</span><span class="tt-speech">“<span class="tt-speech-inner">还是说——</span>”</span><span class="tt-narration">她声音放低，尾音拖着，</span><span class="tt-speech">“<span class="tt-speech-inner">你根本不想我学会。</span>”</span></div><div class="tt-meta"><span class="tt-meta-label">场景</span><span class="tt-meta-value">时间 20:47 雨夜 · 地点 补课公寓的小客厅</span></div><section class="tt-status" data-section="status">
+    <div class="tt-section-title">状态</div>
+    <div class="tt-status-grid"><div class="tt-char">
+      <div class="tt-char-name">她</div>
+      <div class="tt-char-body"><span class="tt-field tt-field-num" data-key="affection"><span class="tt-gauge" data-value="41">
+    <span class="tt-gauge-ring" style="--tt-gauge:41"></span>
+    <span class="tt-gauge-text">41</span>
+    <span class="tt-gauge-label">好感</span>
+  </span></span><span class="tt-field tt-field-num" data-key="reason"><span class="tt-gauge" data-value="27">
+    <span class="tt-gauge-ring" style="--tt-gauge:27"></span>
+    <span class="tt-gauge-text">27</span>
+    <span class="tt-gauge-label">理性</span>
+  </span></span><span class="tt-field tt-field-tag" data-key="mood">
+      <span class="tt-tag-label">心情</span><span class="tt-tag-value">试探而笃定</span>
+    </span><span class="tt-field tt-field-text" data-key="outfit">
+    <span class="tt-text-label">穿着</span>校服，领口松散，裙下是短袜
+  </span><span class="tt-field tt-field-tag" data-key="body">
+      <span class="tt-tag-label">身体</span><span class="tt-tag-value">身上带着雨水的凉</span>
+    </span></div>
+      <div class="tt-char-inner">心声：他不敢看我。可他也没走。</div>
+    </div></div>
+  </section><section class="tt-choices" data-section="choices">
+    <div class="tt-section-title">你的选择<small class="tt-choices-hint">点一下直接发送</small></div>
+    <ol class="tt-choice-list"><li class="tt-choice" data-tt-send="把笔捡起来，指着题目，正经讲第五遍" role="button" tabindex="0">
+    <span class="tt-choice-index">1</span>
+    <span class="tt-choice-text">把笔捡起来，指着题目，正经讲第五遍</span>
+  </li><li class="tt-choice" data-tt-send="把台灯转过去，让她看不清你的表情" role="button" tabindex="0">
+    <span class="tt-choice-index">2</span>
+    <span class="tt-choice-text">把台灯转过去，让她看不清你的表情</span>
+  </li></ol>
+  </section></div></div>
+      </div>
+    </div>
+  </section>
+</body></html>

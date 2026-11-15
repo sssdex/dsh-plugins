@@ -1,0 +1,31 @@
+{
+  "id": "context-bottom-seat",
+  "package": "dsh-context",
+  "file": "lib/client.js",
+  "testedWith": [
+    "0.83.1"
+  ],
+  "description": "在 dsh-context 侧栏面板的滚动流里、页脚之前留一个座位（window.__DSH_EMBED_SEATS__['dsh-context.bottom']），让 dsh-token-tree 把父子 token 卡片嵌进同一个面板，不再单独占一个右侧栏 tab。",
+  "pristineSha256": "ED068A99337A59567E1B5782EC8A408F25FDB4758623ED7652E0F4FD30775A55",
+  "patchedSha256": "FDC8F6EED2B1A0B2B4C00F5F875B05BA381786DFE37897A113C4B12102F656E1",
+  "pristineMarkers": [
+    "factory:e=>{var t={exports:{}};",
+    ",(0,d.jsx)(`div`,{className:`lc-foot`,children:i(`footer`)})"
+  ],
+  "appliedMarkers": [
+    "__dshEmbedSeat",
+    "dsh-context.bottom"
+  ],
+  "ops": [
+    {
+      "tag": "定义嵌入座位宿主组件（带就绪轮询）",
+      "old": "factory:e=>{var t={exports:{}};",
+      "new": "factory:e=>{var t={exports:{}};function __dshSeatReg(){var w=typeof window<`u`?window:null;var r=w?w.__DSH_EMBED_SEATS__:null;return r&&typeof r==`object`?r:null}function __dshEmbedSeat(S){var b=(0,u.useState)(0),set=b[1];var R=__dshSeatReg();var C=R&&R[S.seat]||null;(0,u.useEffect)(function(){if(C)return;var n=0,id=setInterval(function(){n++;var r=__dshSeatReg();if(r&&r[S.seat]||n>50){clearInterval(id);set(function(x){return x+1})}},200);return function(){clearInterval(id)}},[C]);return C?(0,d.jsx)(C,{sessionId:S.sessionId}):null}"
+    },
+    {
+      "tag": "页脚之前渲染嵌入座位",
+      "old": ",(0,d.jsx)(`div`,{className:`lc-foot`,children:i(`footer`)})",
+      "new": ",s?(0,d.jsx)(__dshEmbedSeat,{seat:`dsh-context.bottom`,sessionId:typeof o==`string`?o:void 0}):null,(0,d.jsx)(`div`,{className:`lc-foot`,children:i(`footer`)})"
+    }
+  ]
+}

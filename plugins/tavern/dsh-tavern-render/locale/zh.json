@@ -1,0 +1,15 @@
+{
+  "meta": {
+    "title": "酒馆回话排版",
+    "description": "把酒馆预设的结构化回话拆成分层正文、状态卡、动态流、聊天与选项，不再是一坨同色文字。"
+  },
+  "settings": {
+    "title": "酒馆回话排版",
+    "enabled": "启用分层渲染",
+    "enabledHint": "关闭后回退到原生 Markdown 显示。改动对本 profile 的所有会话生效。",
+    "streamingGuard": "等回复说完再排版",
+    "streamingGuardHint": "流式输出过程中暂不接管，避免半句话被反复重排导致闪烁。",
+    "minSpeech": "最少对白行数",
+    "minSpeechHint": "一条回话至少要有这么多句带引号的对白才排版。调高可以避免普通聊天被误伤。"
+  }
+}

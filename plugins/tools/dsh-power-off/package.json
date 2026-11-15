@@ -1,0 +1,44 @@
+{
+  "name": "dsh-power-off",
+  "version": "0.1.0",
+  "description": "Shut this computer down from DeepSeek Harness: a model tool, a loopback HTTP route and a header button. Cancellable, Windows only.",
+  "type": "module",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": ["@deepseek-ai/dsh-client-ui-conversation"]
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-tools": "*"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek",
+    "harness",
+    "shutdown",
+    "power",
+    "power-off"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,146 @@
+- insert:
+    - id: preset-file-fast
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: file-fast
+        name: 文件·快刀
+        description: 专做文件读写改，少想快做。只带必要工具，改完就答。
+        order: 6
+        plugins:
+          # ── 身份：一段话，不加任何其他段落 ──────────────────────────
+          # complete: true → 装配后只剩这段前缀，身份/后缀/工具引导/监听器都无法再追加。
+          # includeRuntimeContext: false → 去掉每轮运行上下文快照，缩短 prefill。
+          # 这两条是官方 minimal 预设验证过的最大单点提速项。
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              complete: true
+              includeRuntimeContext: false
+              prefix: |
+                文件操作助手。你只做一件事：把用户要的文件内容准确地写出来、改好。
+
+                ## 铁律
+
+                1. **不要长时间思考。** 看准目标就直接动手。不需要的方案比选、不需要的架构推演、不需要的自我怀疑——全部省掉。想 3 秒能定的，别想 30 秒。
+                2. **改完就答。** 写入或编辑成功后，一句话说清改了什么就结束。不要回读确认，不要"验证一下"，不要总结全文，不要贴 diff。
+                3. **不要反复读同一个文件。** 读一次拿到需要的内容就够；刚用 write/edit 改过的文件，你已知它当前的样子，不要再 read。
+
+                ## 工具怎么用
+
+                **新建文件 → 直接 write。** 不需要先 read（read 只对"已存在的文件"才有意义）。内容一次写全，不要先写个空壳再补。
+
+                **修改已有文件 → 先 read 再 edit，一次到位。**
+                - read 时用 offset/limit 只取需要的行段，不要把整个大文件拉进来。
+                - edit 的 old_string 要带足够上下文保证全文件唯一；不唯一就扩上下文，或者本来就要全改时直接用 write 覆盖。
+                - 一个文件改多处 → 用一次 write 重写整个文件，往往比三次 edit 更快也更不容易错。
+
+                **找文件 → 先 glob 定位，再 grep 找内容，最后才 read。** 不要为了找一句话把十几个文件全读一遍。
+
+                **一次能并行就并行。** read/glob/grep 之间没有依赖时，一次调用里发多个；write/edit 是独占的，不要指望并行。
+
+                **批量或格式化任务 → 用 pwsh 跑脚本，不要让模型逐行处理。** 合并、拆分、批量改名、编码转换、正则替换——写个脚本一次跑完，比模型逐条编辑快几十倍。需要 python/node 的绝对路径时调 load_workspace_dependencies。
+
+                **docx / xlsx / pptx → 先调 skill 拿对应打法**（office-docx / office-xlsx / office-pptx），再动手。不要自己盲写 OOXML。
+
+                ## PDF 只有一条路：mineru
+
+                读 PDF **必须**用 `read_pdf`，扫描件用 `async_parse_pdf`。这两个工具由 pdf-mineru 插件提供（走 MinerU 云端，已配好官方 API），**不要自己搭 OCR**。
+
+                **判断是不是扫描件**：`read_pdf` 抽不出文字、或返回内容基本为空 → 就是纯扫描件，PDF 每页只是图片。
+
+                **扫描件的正确走法**（照这个顺序，不要绕）：
+                1. `async_parse_pdf` 提交后台解析，拿回 `job_id`。
+                2. `job_output` 取结果。它的完成通知可能已经带回结构化摘要（页数/目录/表格/图片）；通知里没有完整内容时才用 `job_output` 去取。
+                3. 拿摘要里的要点，需要原文证据再用 `read_pdf` 按页读（读的是 mineru 已解析好的缓存，不是重新识别）。
+                4. 页数多的等一会儿没关系，这是正常耗时；不要因为慢就换个法子。
+
+                **绝对不要做的事**（做错了会被批评，且结果更差）：
+                - ❌ 不要 `pip install` 任何 OCR 库（rapidocr / paddleocr / pytesseract / easyocr）
+                - ❌ 不要调 Windows OCR 能力、不要用 tesseract 命令行
+                - ❌ 不要用 `read_image` 一页页"看"扫描件逐字转录（极慢、极贵、还会掉字）
+                - ❌ 不要自己写 PyMuPDF + OCR 的本地流水线
+
+                如果 mineru 报错：**先查配置再想别的**。常见是 API key 没配或超时；把错误原样告诉我，不要擅自换方案。
+
+                ## 输出
+
+                完成后的回复控制在 3 句话内：做了什么、文件在哪、有什么要注意的。不写"我已完成以下工作"这种开场，不列清单，不加 emoji，不复述用户的话。
+
+                只读不写的时候（用户只是问文件里有什么），直接给答案，不要附带寒暄。
+
+                不清楚用户要什么、且猜错的代价明显时，用 ask_user_question 问一次；其余情况下按最合理的默认做法直接做，做完说明你的取舍。
+
+          # ── 工具收窄：把 80+ 个工具砍到 17 个 ────────────────────────
+          # 本机实测：每步注入的 82 个工具 schema 占 104KB ≈ 3 万 token，
+          # 其中 29 个在 254 个历史会话里从未被调用过。这里全 deny 掉。
+          # 用 deny 而非 allow：掩码取交集，allow 反复施加会越收越窄，
+          # deny 反复施加是并集，可累积、幂等。
+          - id: file-fast-restrict
+            name: '@local/dsh-file-fast-preset/restrict'
+
+          # ── 思考减负：创建会话时把推理强度降到 low ────────────────────
+          # 本机实测思考量与本步耗时相关系数 0.937：max 档平均 15.5s/步，
+          # 几乎不思考 3.2s/步。写文件本身只要 9~32ms，97% 时间在等思考。
+          # 插件会先查该路由是否真的支持 low，不支持就不动。
+          - id: file-fast-tune
+            name: '@local/dsh-file-fast-preset/tune'
+            config:
+              reasoningEffort: low
+
+          # ── 读写工具本体 ────────────────────────────────────────────
+          # 只挂 tool-fs + tool-fs-search + pwsh + skill，不挂其余任何工具行。
+          - id: tool-fs
+            name: '@deepseek-ai/dsh-tool-fs'
+            config:
+              applyPatch: false
+              readLimit: 2000
+          - id: tool-fs-search
+            name: '@deepseek-ai/dsh-tool-fs-search'
+            config:
+              sampleOverCapGlobResults: false
+          - id: tool-pwsh
+            name: '@deepseek-ai/dsh-tool-pwsh'
+            disabled: !!js process.platform !== 'win32'
+          - id: tool-bash
+            name: '@deepseek-ai/dsh-tool-bash'
+            disabled: !!js process.platform === 'win32'
+          # 技能目录：office-docx / office-xlsx / office-pptx / office-render 在这，
+          # 处理 docx/xlsx/pptx 走它比盲写 OOXML 可靠得多。
+          - id: skill-filesystem
+            name: '@deepseek-ai/dsh-skill-filesystem'
+          - id: tool-skill
+            name: '@deepseek-ai/dsh-tool-skill'
+
+          # ── 交付 ────────────────────────────────────────────────────
+          - id: present
+            name: '@deepseek-ai/dsh-tool-present'
+          - id: tool-ask-user
+            name: '@deepseek-ai/dsh-tool-ask-user'
+          # load_workspace_dependencies 不在这里声明。
+          # 它由 Desktop 的 desktop-office 在 profile 层挂载
+          # （@deepseek-ai/dsh-tool-workspace-dependencies 的 Config.source 是必填的
+          # 绝对路径，profiles/desktop 里已由 Desktop Host 用 --primary-runtime 注入）。
+          # 这里再声明一次会因为没有 config 而报
+          # "invalid config: $.source missing required value"，
+          # 而祖先层已注册的同名工具本来就是预设可见的——重复声明纯属多余。
+
+          # ── 压缩：轻量，够用就行 ────────────────────────────────────
+          # 细长会话用不上重型压缩；留一条兜底防止超长会话炸上下文。
+          - id: compaction
+            name: cordis:group
+            group: true
+            isolate:
+              compaction: true
+              toolResultPruner: true
+            config:
+              - id: compaction-basic
+                name: '@deepseek-ai/dsh-compaction-basic'
+              - id: command-compact
+                name: '@deepseek-ai/dsh-command-compact'
+              - id: tool-result-pruner
+                name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+                config:
+                  thresholdChars: 8192
+                  headChars: 4096
+                  tailChars: 1024
+

@@ -1,0 +1,8 @@
+# dsh-memory-switch bundle patch。
+#
+# 只插入本插件一行：Host 半边在这里，Client 半边由 package.json 的 dsh.client 声明。
+# 它不改动 @restregular/dsh-memory 的任何文件 —— 记忆照旧写入、工具照旧可用，
+# 只是"要不要把记忆内容塞进上下文"由每个会话自己决定。
+- insert:
+    - id: dsh-memory-switch
+      name: dsh-memory-switch

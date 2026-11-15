@@ -1,0 +1,14 @@
+# dsh-tavern-model-handoff 自带的 bundle 层。
+# profile 的 package.json 把 dsh-tavern-model-handoff 列进 dsh.profile.bundles 后，
+# 这一层会自动挂载，不必手改 profile 的 cordis.patch.yml。
+#
+# 想改参数就在 profile 的 cordis.patch.yml 里用同名 id 覆盖（loader 会按 id 合并）：
+#   - id: dsh-tavern-model-handoff
+#     config:
+#       presets: [tavern-play]
+#       stripSwitchNotice: true
+#       flash:  { provider: zzz1, model: deepseek-flash }
+#       target: { provider: workbuddy-global, model: hy3, reasoningEffort: off }
+- insert:
+    - id: dsh-tavern-model-handoff
+      name: dsh-tavern-model-handoff

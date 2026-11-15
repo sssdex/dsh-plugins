@@ -1,0 +1,8 @@
+# dsh-client-patchguard 自带的 bundle 层：把本插件插入 loader 树。
+# 只要 profile 的 package.json 把 dsh-client-patchguard 列进 dsh.profile.bundles，
+# 这一层就会被自动挂载，无需手工改 profile 的 cordis.patch.yml。
+# 机器相关的路径（profileDir / storeRoot）**故意不写在这里** —— 那是 profile 的
+# cordis.patch.yml（机器层）该管的事，见 index.js 的 resolveProfileDir 兜底顺序。
+- insert:
+    - id: dsh-client-patchguard
+      name: dsh-client-patchguard

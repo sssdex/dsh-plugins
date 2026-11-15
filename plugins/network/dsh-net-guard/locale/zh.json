@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "网络自愈",
+    "description": "检测从启动环境继承来的死代理端口，把本进程切到直连 dispatcher，让残留的 HTTP_PROXY 不再能把所有模型打掉。附带 net_guard_status 工具，随时查当前实际走的是哪条网络路径。",
+    "detail": "docs/DETAIL.md"
+  }
+}

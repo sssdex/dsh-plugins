@@ -1,0 +1,23 @@
+{
+  "name": "@local/dsh-file-fast-preset",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./restrict.js",
+    "./restrict": "./restrict.js",
+    "./tune": "./tune.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "restrict.js",
+    "tune.js",
+    "cordis.patch.yml"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

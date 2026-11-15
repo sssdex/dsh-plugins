@@ -1,0 +1,6 @@
+# dsh-qq-hands 自带的 bundle 层。
+# profile 的 package.json 把 dsh-qq-hands 列进 dsh.profile.bundles 后，
+# 这一层会被自动挂载，无需手工改 profile 的 cordis.patch.yml。
+- insert:
+    - id: dsh-qq-hands
+      name: dsh-qq-hands

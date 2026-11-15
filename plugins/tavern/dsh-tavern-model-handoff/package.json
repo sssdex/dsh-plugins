@@ -1,0 +1,31 @@
+{
+  "name": "dsh-tavern-model-handoff",
+  "version": "0.1.0",
+  "description": "酒馆扮演开局用中转站 flash 读卡，读到卡/跑完命令后自动切到 workbuddy-global/hy3 无思考模式出正文。",
+  "type": "module",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "tavern",
+    "model-handoff"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.13.0"
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "name": "dsh-net-guard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "In-process outbound network self-heal for DeepSeek Harness: detects a dead loopback proxy inherited from the launch environment and switches the process to a direct dispatcher.",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "docs",
+    "icon.svg",
+    "selftest.mjs",
+    "e2e-dirty-boot.mjs"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-tools": "*"
+  },
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "network",
+    "proxy",
+    "self-heal"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "test": "node selftest.mjs",
+    "e2e": "node e2e-dirty-boot.mjs"
+  }
+}

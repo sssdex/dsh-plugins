@@ -1,0 +1,36 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8">
+<style>
+:root{--dsw-alias-label-primary:#e6e6e6;--dsw-alias-label-secondary:#a0a4ab;--dsw-alias-label-tertiary:#81858c;
+--dsw-alias-border-l1:rgba(255,255,255,.12);--dsw-alias-border-l2:rgba(255,255,255,.2);
+--dsw-alias-interactive-bg-hover:rgba(255,255,255,.10);--dsw-alias-brand-primary:#4d7cfe;
+--dsw-alias-button-primary-fill:#4d7cfe;--dsw-alias-label-primary-foreground:#fff;}
+body{margin:0;background:#1b1b1d;color:#e6e6e6;font:13px/1.5 Inter,system-ui,"Segoe UI",sans-serif;padding:24px}
+h1{font-size:12px;font-weight:600;color:#a0a4ab;margin:0 0 8px;letter-spacing:.02em}
+.row{display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid rgba(255,255,255,.12);border-radius:10px;
+width:max-content;margin:0 0 8px;background:#232326}
+.native{width:28px;height:28px;display:grid;place-items:center;border:0;border-radius:999px;background:transparent;
+color:var(--dsw-alias-label-secondary);cursor:pointer;font-size:14px}
+.native:hover{background:var(--dsw-alias-interactive-bg-hover)}
+.old{display:inline-flex;align-items:center;justify-content:center;height:22px;padding:0 8px;border-radius:11px;
+border:1px solid var(--dsw-alias-border-l2);background:transparent;color:var(--dsw-alias-label-secondary);
+font-size:11px;white-space:nowrap;cursor:pointer}
+.rack{display:flex;align-items:center;gap:8px}
+.meta{color:#81858c;font-size:12px;margin:0 0 22px}
+</style>
+<style>.dshtt{box-sizing:border-box;display:flex;flex-direction:column;height:100%;min-height:0;font:inherit;color:var(--dsw-alias-label-primary,inherit);font-size:12px;line-height:1.5}.dshtt-head{flex:none;display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--dsw-alias-border-l1,rgba(128,128,128,.22))}.dshtt-head-title{font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.dshtt-btn{box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;height:22px;padding:0 8px;border-radius:11px;border:1px solid var(--dsw-alias-border-l2,rgba(128,128,128,.32));background:transparent;color:var(--dsw-alias-label-secondary,inherit);font:inherit;font-size:11px;cursor:pointer;white-space:nowrap;transition:background .12s ease,color .12s ease}.dshtt-btn:hover{background:var(--dsw-alias-interactive-bg-hover,rgba(128,128,128,.16));color:var(--dsw-alias-label-primary,inherit)}.dshtt-btn:disabled{opacity:.5;cursor:default}.dshtt-btn:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4d7cfe);outline-offset:1px}.dshtt-btn[data-on='1']{border-color:var(--dsw-alias-brand-primary,#4d7cfe);color:var(--dsw-alias-brand-primary,#4d7cfe)}.dshtt-hbtn{box-sizing:border-box;flex:none;display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;padding:0;border:0;border-radius:999px;background:transparent;color:var(--dsw-alias-label-secondary,inherit);font:inherit;font-size:14px;line-height:1;cursor:pointer;transition:background .12s ease,color .12s ease}.dshtt-hbtn>span{display:block;transform:translateY(-.5px)}.dshtt-hbtn:hover{background:var(--dsw-alias-interactive-bg-hover,rgba(128,128,128,.16));color:var(--dsw-alias-label-primary,inherit)}.dshtt-hbtn:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4d7cfe);outline-offset:1px}.dshtt-body{flex:1;min-height:0;overflow:auto;padding:10px}.dshtt-note{color:var(--dsw-alias-label-secondary,inherit);font-size:11px;padding:2px 0 8px}.dshtt-card{border:1px solid var(--dsw-alias-border-l1,rgba(128,128,128,.22));border-radius:8px;padding:8px 10px;margin-bottom:8px}.dshtt-card-h{color:var(--dsw-alias-label-secondary,inherit);font-size:11px;margin-bottom:4px}.dshtt-big{font-size:20px;font-weight:650;font-variant-numeric:tabular-nums;letter-spacing:-.01em}.dshtt-big-sub{font-size:12px;font-weight:400;color:var(--dsw-alias-label-secondary,inherit);margin-left:6px}.dshtt-kv{display:flex;flex-wrap:wrap;gap:3px 14px;margin-top:6px;font-size:11px;color:var(--dsw-alias-label-secondary,inherit);font-variant-numeric:tabular-nums}.dshtt-kv b{color:var(--dsw-alias-label-primary,inherit);font-weight:600}.dshtt-seg{display:inline-flex;border:1px solid var(--dsw-alias-border-l2,rgba(128,128,128,.32));border-radius:11px;overflow:hidden;margin-left:auto}.dshtt-seg button{border:0;background:transparent;color:var(--dsw-alias-label-secondary,inherit);font:inherit;font-size:11px;padding:2px 8px;cursor:pointer}.dshtt-seg button[data-on='1']{background:var(--dsw-alias-button-primary-fill,#4d7cfe);color:var(--dsw-alias-label-primary-foreground,#fff)}.dshtt-tree{font-variant-numeric:tabular-nums}.dshtt-row{display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:baseline;padding:4px 6px;border-radius:5px}.dshtt-row:hover{background:var(--dsw-alias-interactive-bg-hover,rgba(128,128,128,.1))}.dshtt-row-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.dshtt-row-n{font-weight:600}.dshtt-row-meta{grid-column:1/-1;color:var(--dsw-alias-label-secondary,inherit);font-size:10.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.dshtt-bar{grid-column:1/-1;height:3px;border-radius:2px;background:var(--dsw-alias-bg-layer-2,rgba(128,128,128,.2));overflow:hidden;margin-top:2px}.dshtt-bar>i{display:block;height:100%;border-radius:2px;background:var(--dsw-alias-brand-primary,#4d7cfe)}.dshtt-mark{color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary,inherit));font-family:var(--ds-font-family-code,ui-monospace,monospace);white-space:pre}.dshtt-err{color:var(--dsw-alias-state-error-primary,#dc2626);font-size:11px;word-break:break-all}.dshtt-empty{color:var(--dsw-alias-label-secondary,inherit);padding:14px 4px;text-align:center}</style></head><body>
+<h1>改前 · 带文字胶囊</h1>
+<div class="row"><div class="rack"><button class="native">▭</button><button class="native">⭳</button></div>
+<div class="rack"><button class="old">Σ 父+子 Token</button><button class="native">↻</button><button class="native">⋯</button><button class="native">▯</button></div></div>
+<p class="meta" id="m1"></p>
+<h1>改后 · 28×28 纯图标</h1>
+<div class="row"><div class="rack"><button class="native">▭</button><button class="native">⭳</button></div>
+<div class="rack"><button class="dshtt-hbtn" title="父+子 Token" aria-label="父+子 Token"><span>Σ</span></button><button class="native">↻</button><button class="native">⋯</button><button class="native">▯</button></div></div>
+<p class="meta" id="m2"></p>
+<script>
+const oldB=document.querySelector('.old').getBoundingClientRect();
+const b=document.querySelector('.dshtt-hbtn').getBoundingClientRect();
+const n=document.querySelectorAll('.native')[0].getBoundingClientRect();
+document.getElementById('m1').textContent='按钮 '+oldB.width.toFixed(0)+'×'+oldB.height.toFixed(0)+'px';
+document.getElementById('m2').textContent='按钮 '+b.width.toFixed(0)+'×'+b.height.toFixed(0)+'px（旁边原生按钮 '+n.width.toFixed(0)+'×'+n.height.toFixed(0)+'px）';
+</script>
+</body></html>

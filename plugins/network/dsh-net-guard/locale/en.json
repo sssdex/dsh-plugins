@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Network self-heal",
+    "description": "Detects a dead loopback proxy inherited from the launch environment and switches this process to a direct dispatcher, so a stale HTTP_PROXY can no longer take every model offline. Adds a net_guard_status tool that reports which network path is actually in use.",
+    "detail": "docs/DETAIL.md"
+  }
+}

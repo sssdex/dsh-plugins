@@ -1,0 +1,36 @@
+{
+  "id": "pdf-mineru-settings-section",
+  "title": "MinerU PDF 设置页分区（settings.section）",
+  "why": "上游 dsh-pdf-mineru 只把设置界面注册到 plugins.bundle.config（插件详情页里的那张卡片），从不注册 settings.section，所以设置窗口左侧导航里没有它自己的分区。本补丁补一条 settings.section 注册（复用同一个 SettingsPage 组件与同一个 inject 面），并给中英字典各加一个导航标签 sectionLabel。页面根节点本来就是 div + flex column，无需 li→div 改造。",
+  "package": "dsh-pdf-mineru",
+  "file": "lib/client.js",
+  "testedWith": [
+    "0.2.2"
+  ],
+  "pristineSha256": "5899DCD661A04A07FF13D0316095F6370EA02A5FDADC7AF0D356A75A86C9F3B9",
+  "patchedSha256": "E67F7D3C439C65D3E0999E8DB667F59F0B3AB3C978FC7EBCF27A6E2F7A19A34D",
+  "pristineMarkers": [
+    "\t\t\t}, SettingsPage));\n\t\t}\n\t\t//#endregion\n\t\texports.apply = apply;"
+  ],
+  "appliedMarkers": [
+    "\t\t\t\tname: \"settings.section\",\n\t\t\t\tid: \"pdf-mineru\",",
+    "\"sectionLabel\": \"MinerU PDF 阅读\","
+  ],
+  "ops": [
+    {
+      "tag": "add settings.section registration",
+      "old": "\t\t\t}, SettingsPage));\n\t\t}\n\t\t//#endregion\n\t\texports.apply = apply;",
+      "new": "\t\t\t}, SettingsPage));\n\t\t\tctx.slots.inject(\"settings.section\", () => ctx.slots.register({\n\t\t\t\tname: \"settings.section\",\n\t\t\t\tid: \"pdf-mineru\",\n\t\t\t\torder: 190,\n\t\t\t\tlabel: () => ctx.locale.bind(NS)(\"sectionLabel\"),\n\t\t\t\tlocale: NS,\n\t\t\t\tinject: injected\n\t\t\t}, SettingsPage));\n\t\t}\n\t\t//#endregion\n\t\texports.apply = apply;"
+    },
+    {
+      "tag": "en dict: sectionLabel",
+      "old": "\t\t\t\"page.tabs\": \"MinerU settings\",\n",
+      "new": "\t\t\t\"page.tabs\": \"MinerU settings\",\n\t\t\t\"sectionLabel\": \"MinerU PDF\",\n"
+    },
+    {
+      "tag": "zh dict: sectionLabel",
+      "old": "\t\t\t\"page.tabs\": \"MinerU 设置\",\n",
+      "new": "\t\t\t\"page.tabs\": \"MinerU 设置\",\n\t\t\t\"sectionLabel\": \"MinerU PDF 阅读\",\n"
+    }
+  ]
+}

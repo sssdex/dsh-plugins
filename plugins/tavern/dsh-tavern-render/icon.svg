@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Tavern reply layout">
+  <defs>
+    <linearGradient id="tt-g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7fd3c4"/>
+      <stop offset="1" stop-color="#b39ddb"/>
+    </linearGradient>
+  </defs>
+  <rect x="3" y="3" width="58" height="58" rx="14" fill="#10151c"/>
+  <rect x="3" y="3" width="58" height="58" rx="14" fill="none" stroke="url(#tt-g)" stroke-width="1.5" opacity="0.55"/>
+  <!-- 正文三行：旁白 / 对白 / 旁白，用长短与颜色区分层级 -->
+  <rect x="12" y="14" width="30" height="3.2" rx="1.6" fill="#8b95a5" opacity="0.85"/>
+  <rect x="12" y="21" width="40" height="5.4" rx="2.7" fill="url(#tt-g)"/>
+  <rect x="12" y="30.5" width="24" height="3.2" rx="1.6" fill="#8b95a5" opacity="0.6"/>
+  <!-- 状态卡：两个数值环 + 一条字段 -->
+  <circle cx="19" cy="45" r="5.2" fill="none" stroke="#7fd3c4" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="24 33" transform="rotate(-90 19 45)"/>
+  <circle cx="34" cy="45" r="5.2" fill="none" stroke="#e5b567" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="16 33" transform="rotate(-90 34 45)"/>
+  <rect x="43" y="42" width="9" height="6" rx="3" fill="#e88fa8" opacity="0.9"/>
+</svg>

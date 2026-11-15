@@ -1,0 +1,40 @@
+{
+  "name": "dsh-qq-hands",
+  "version": "0.1.0",
+  "description": "DeepSeek Harness QQ 之手：让助手在 QQ 里主动发消息、发表情包、发语音、发电脑截图、发文件，并把长回复按句拆成多条「真人式」气泡。",
+  "type": "module",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "lib/",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-tools": "*"
+  },
+  "dependencies": {
+    "mpg123-decoder": "^1.0.3",
+    "silk-wasm": "3.7.1",
+    "ws": "^8.22.0"
+  },
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "qq",
+    "qqbot"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.13.0"
+  }
+}

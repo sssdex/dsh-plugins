@@ -1,0 +1,15 @@
+{
+  "meta": {
+    "title": "Tavern reply layout",
+    "description": "Renders tavern-preset replies as layered prose, status cards, feeds, chats and choices instead of one flat block of text."
+  },
+  "settings": {
+    "title": "Tavern reply layout",
+    "enabled": "Enable layered rendering",
+    "enabledHint": "Turn off to fall back to the plain Markdown rendering. Changes apply to every session in this profile.",
+    "streamingGuard": "Wait for the reply to finish",
+    "streamingGuardHint": "Hold rendering while a reply is still streaming, so the layout does not flicker mid-sentence.",
+    "minSpeech": "Minimum dialogue lines",
+    "minSpeechHint": "Only restyle a reply when it has at least this many quoted lines. Raises the bar for ordinary chat."
+  }
+}

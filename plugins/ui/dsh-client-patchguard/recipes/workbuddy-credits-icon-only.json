@@ -1,0 +1,37 @@
+{
+  "id": "workbuddy-credits-icon-only",
+  "title": "WorkBuddy composer 积分读数：28×28 纯图标按钮",
+  "why": "积分读数原为「WB CN · 2,357」12px 文字，在 composer 工具条里和宿主图标按钮不是同一体例。改为 28×28、999px、透明底、label-secondary 的纯图标按钮（硬币叠 15px），与前两个插件按钮同尺寸同色；地区与余额保留在 title / aria-label，信息不丢。同级的「N 新模型」按钮与积分面板不动。",
+  "package": "dsh-connect-workbuddy",
+  "file": "lib/client.js",
+  "testedWith": [
+    "5.21.3"
+  ],
+  "pristineSha256": "8D33037DADFAC99102F53B8ECA65016A1503529D0976688A688BE993DB98E449",
+  "patchedSha256": "C39750D899BAC717B7A128CDAC366F77F60B2F6011348AE31659695E2AA91E10",
+  "pristineMarkers": [
+    ".dsm-workbuddy-composer-credits-trigger{\n  appearance:none;display:inline-flex;align-items:center;align-self:stretch;",
+    "font-size:12px;line-height:18px;\n  color:var(--dsw-alias-label-tertiary,#999);"
+  ],
+  "appliedMarkers": [
+    ".dsm-workbuddy-composer-credits-trigger{\n  appearance:none;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;align-self:center;",
+    "className: \"dsm-workbuddy-composer-credits-icon\""
+  ],
+  "ops": [
+    {
+      "tag": "积分按钮：文字读数样式改为 28×28 中性幽灵图标按钮",
+      "old": "/* The readout is plain composer text — no border, no fill at rest. The padding\n   is only the click target, invisible until the pointer arrives. */\n.dsm-workbuddy-composer-credits{display:inline-flex;align-items:center;min-width:0}\n.dsm-workbuddy-composer-credits-trigger{\n  appearance:none;display:inline-flex;align-items:center;align-self:stretch;\n  padding:2px 6px;border:0;border-radius:6px;background:transparent;\n  /* EXPLICIT, not inherit. The composer row's own font and body colour are\n     noticeably larger and darker than the neighbouring controls — a credit\n     readout is secondary information and must not shout. 12px matches this\n     plugin's original line; label-tertiary matches the shell's own composer-row\n     control (ContextMeter), which is the sibling this reads alongside. */\n  font-size:12px;line-height:18px;\n  color:var(--dsw-alias-label-tertiary,#999);\n  white-space:nowrap;cursor:pointer;\n  font-variant-numeric:tabular-nums;\n}\n.dsm-workbuddy-composer-credits-trigger:hover{background:var(--dsw-alias-interactive-bg-hover,rgba(127,127,127,.14))}",
+      "new": "/* Icon-only credits trigger (local patch): region and balance stay in title /\n   aria-label, so hiding the text loses no information. 28×28 / 999px / ghost\n   matches the shell's own composer icon buttons. */\n.dsm-workbuddy-composer-credits{display:inline-flex;align-items:center;min-width:0}\n.dsm-workbuddy-composer-credits-trigger{\n  appearance:none;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;align-self:center;\n  flex:0 0 28px;width:28px;min-width:28px;height:28px;\n  margin:0;padding:0;border:0;border-radius:999px;background:transparent;\n  color:var(--dsw-alias-label-secondary);\n  cursor:pointer;\n}\n.dsm-workbuddy-composer-credits-trigger:hover{background:var(--dsw-alias-interactive-bg-hover)}\n.dsm-workbuddy-composer-credits-icon{display:block;flex:none;width:16px;height:16px;color:currentColor}"
+    },
+    {
+      "tag": "积分按钮：文字子节点改为硬币叠 SVG，并补充动态可访问名称",
+      "old": "\t\t\t\t\t/* @__PURE__ */ (0, react_jsx_runtime.jsxs)(\"button\", {\n\t\t\t\t\t\ttype: \"button\",\n\t\t\t\t\t\tclassName: \"dsm-workbuddy-composer-credits-trigger\",\n\t\t\t\t\t\t\"aria-haspopup\": \"dialog\",\n\t\t\t\t\t\t\"aria-expanded\": open,\n\t\t\t\t\t\tonClick: () => {\n\t\t\t\t\t\t\tsetOpen(!open);\n\t\t\t\t\t\t},\n\t\t\t\t\t\tchildren: [\n\t\t\t\t\t\t\tlabel,\n\t\t\t\t\t\t\t\" · \",\n\t\t\t\t\t\t\tvalueText\n\t\t\t\t\t\t]\n\t\t\t\t\t}),",
+      "new": "\t\t\t\t\t/* @__PURE__ */ (0, react_jsx_runtime.jsx)(\"button\", {\n\t\t\t\t\t\ttype: \"button\",\n\t\t\t\t\t\tclassName: \"dsm-workbuddy-composer-credits-trigger\",\n\t\t\t\t\t\ttitle: `积分：${label} · ${valueText}`,\n\t\t\t\t\t\t\"aria-label\": `积分：${label} · ${valueText}`,\n\t\t\t\t\t\t\"aria-haspopup\": \"dialog\",\n\t\t\t\t\t\t\"aria-expanded\": open,\n\t\t\t\t\t\tonClick: () => {\n\t\t\t\t\t\t\tsetOpen(!open);\n\t\t\t\t\t\t},\n\t\t\t\t\t\tchildren: /* @__PURE__ */ (0, react_jsx_runtime.jsxs)(\"svg\", {\n\t\t\t\t\t\t\tclassName: \"dsm-workbuddy-composer-credits-icon\",\n\t\t\t\t\t\t\twidth: \"16\",\n\t\t\t\t\t\t\theight: \"16\",\n\t\t\t\t\t\t\tviewBox: \"0 0 16 16\",\n\t\t\t\t\t\t\tfill: \"none\",\n\t\t\t\t\t\t\tstroke: \"currentColor\",\n\t\t\t\t\t\t\tstrokeWidth: \"1.6\",\n\t\t\t\t\t\t\tstrokeLinecap: \"round\",\n\t\t\t\t\t\t\tstrokeLinejoin: \"round\",\n\t\t\t\t\t\t\t\"aria-hidden\": \"true\",\n\t\t\t\t\t\t\tfocusable: \"false\",\n\t\t\t\t\t\t\tchildren: [\n\t\t\t\t\t\t\t\t/* @__PURE__ */ (0, react_jsx_runtime.jsx)(\"ellipse\", {\n\t\t\t\t\t\t\t\t\tcx: \"8\",\n\t\t\t\t\t\t\t\t\tcy: \"4\",\n\t\t\t\t\t\t\t\t\trx: \"5.5\",\n\t\t\t\t\t\t\t\t\try: \"2.25\"\n\t\t\t\t\t\t\t\t}),\n\t\t\t\t\t\t\t\t/* @__PURE__ */ (0, react_jsx_runtime.jsx)(\"path\", {\n\t\t\t\t\t\t\t\t\td: \"M2.5 4v4c0 1.24 2.46 2.25 5.5 2.25s5.5-1.01 5.5-2.25V4\"\n\t\t\t\t\t\t\t\t}),\n\t\t\t\t\t\t\t\t/* @__PURE__ */ (0, react_jsx_runtime.jsx)(\"path\", {\n\t\t\t\t\t\t\t\t\td: \"M2.5 8v4c0 1.24 2.46 2.25 5.5 2.25s5.5-1.01 5.5-2.25V8\"\n\t\t\t\t\t\t\t\t})\n\t\t\t\t\t\t\t]\n\t\t\t\t\t\t})\n\t\t\t\t\t}),"
+    },
+    {
+      "tag": "积分图标描边 1.6 → 1.5（与宿主 16px 图标一致）",
+      "old": "className: \"dsm-workbuddy-composer-credits-icon\",\n\t\t\t\t\t\t\twidth: \"16\",\n\t\t\t\t\t\t\theight: \"16\",\n\t\t\t\t\t\t\tviewBox: \"0 0 16 16\",\n\t\t\t\t\t\t\tfill: \"none\",\n\t\t\t\t\t\t\tstroke: \"currentColor\",\n\t\t\t\t\t\t\tstrokeWidth: \"1.6\",",
+      "new": "className: \"dsm-workbuddy-composer-credits-icon\",\n\t\t\t\t\t\t\twidth: \"16\",\n\t\t\t\t\t\t\theight: \"16\",\n\t\t\t\t\t\t\tviewBox: \"0 0 16 16\",\n\t\t\t\t\t\t\tfill: \"none\",\n\t\t\t\t\t\t\tstroke: \"currentColor\",\n\t\t\t\t\t\t\tstrokeWidth: \"1.5\","
+    }
+  ]
+}

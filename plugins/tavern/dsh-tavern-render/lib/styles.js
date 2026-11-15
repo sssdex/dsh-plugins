@@ -1,0 +1,759 @@
+/**
+ * 样式表。
+ *
+ * 设计约束：
+ *   1. 全部用 CSS 变量定义颜色/字号/字体，主题切换只改变量。
+ *   2. 颜色尽量走宿主主题变量（--dsw-alias-*），亮暗自动跟随；
+ *      但语义色（对白/状态/选项）需要强调，所以自带一套并做暗色覆盖。
+ *   3. 不写全局选择器（除了 body[data-dsh-tavern-render] 前缀），不影响宿主。
+ */
+
+export const STYLE_ID = 'dsh-tavern-render/styles';
+export const SCOPE_ATTR = 'data-dsh-tavern-render';
+
+export function buildCSS() {
+  return `
+/* ═══════════════ 壁纸可读性：文字垫底层 ═══════════════
+ *
+ * 背景是用户自选的壁纸，亮部（窗光、吊灯、白墙）会让正文对比度掉到 2–3:1。
+ * 实测（test/contrast.mjs）：壁纸最亮到 #e8ecf2 时，
+ *   alpha 0.68 → 对白 4.20、神态 3.75（不达标）
+ *   alpha 0.75 → 对白 5.31、神态 4.74（达标）
+ * 所以取 0.75 为基准档。
+ *
+ * 0.75 会让壁纸只剩 25% 可见，直接铺一块纯色就是「黑框」。
+ * 这里用三个手法把氛围找回来：
+ *   1. 双色渐变：左上偏暖（呼应暖色吊灯）、右下偏冷（呼应冷色窗光）
+ *   2. 4.5% 噪点纹理：去掉纯数字色的塑料感，质感像布
+ *   3. 1px 内高光 + 外描边渐变：让容器有厚度，不是贴上去的色块
+ *
+ * 变量可被覆写：宿主或用户想更透/更实，只改 --tt-veil-alpha 即可。
+ */
+body:where([${SCOPE_ATTR}]) {
+  --tt-veil-alpha: 0.75;
+  --tt-veil-radius: 11px;
+  --tt-veil-pad: 15px 19px;
+  /* 噪点：fractalNoise，4.5% 不透明度，180px 平铺 */
+  --tt-veil-noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
+}
+
+body:where([${SCOPE_ATTR}]) .tt-root {
+  position: relative;
+  border-radius: var(--tt-veil-radius);
+  padding: var(--tt-veil-pad);
+  /* 双色渐变 + 噪点叠加。alpha 由变量控制，默认 0.75 */
+  background-image:
+    var(--tt-veil-noise),
+    linear-gradient(145deg,
+      rgba(30, 24, 20, calc(var(--tt-veil-alpha) + 0.01)) 0%,
+      rgba(14, 17, 28, var(--tt-veil-alpha)) 42%,
+      rgba(10, 13, 23, calc(var(--tt-veil-alpha) + 0.03)) 100%);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.055);
+}
+
+/* 顶边 1px 渐变描边：让容器的上沿「有光」，避免观感变成一块黑板 */
+body:where([${SCOPE_ATTR}]) .tt-root::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: calc(var(--tt-veil-radius) + 1px);
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.075) 0%, transparent 62%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* 亮色主题：壁纸通常更亮，需要更实的浅色垫底。
+ *
+ * 关键教训：这里的垫底**必须跟着正文文字色走**。
+ * 之前只改了 alpha 和垫底色，文字仍是深色主题的浅色 → 浅字压浅底，完全看不见。
+ * 所以亮色分支把 --tt-narration / --tt-dialog / --tt-action 一起换掉。 */
+body:where([${SCOPE_ATTR}]):not([data-ds-dark-theme]) {
+  --tt-veil-alpha: 0.86;
+  --tt-narration: #1c2430;
+  --tt-narration-soft: #46536a;
+  --tt-dialog: #8a5a12;
+  --tt-action: #4a3a78;
+  --tt-dim: #5c6a80;
+}
+
+body:where([${SCOPE_ATTR}]):not([data-ds-dark-theme]) .tt-root {
+  background-image:
+    var(--tt-veil-noise),
+    linear-gradient(145deg,
+      rgba(252, 250, 246, calc(var(--tt-veil-alpha) + 0.01)) 0%,
+      rgba(247, 249, 253, var(--tt-veil-alpha)) 42%,
+      rgba(240, 244, 250, calc(var(--tt-veil-alpha) + 0.03)) 100%);
+  box-shadow:
+    0 1px 3px rgba(15, 30, 60, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+body:where([${SCOPE_ATTR}]):not([data-ds-dark-theme]) .tt-root::before {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, transparent 62%);
+}
+
+/* ═══════════════ 主题变量 ═══════════════ */
+body:where([${SCOPE_ATTR}]) {
+  /* 全部正文共用宿主自己的正文字体。
+   * 之前给对白单独配了 Georgia / Songti SC / Noto Serif CJK 的衬线栈，
+   * 但 Windows 上那几个中文字体根本不存在，回退到系统宋体，小字号下发虚发丑。
+   * 现在统一用 --dsh-font-family（宿主已经在 body 上设好），中文英文都跟界面一致。 */
+  --tt-font-prose: var(--dsh-font-family, var(--dsw-font-family, inherit));
+
+  /* 对白：楷体。本机实测存在（楷体 / KaiTi / STKaiti 三档兜底，
+   * 前两个 Windows 自带，第三个是 macOS 名字，都取不到才退到 serif）。
+   * 字号与旁白完全相同 —— 只换字体和颜色，不放大。 */
+  --tt-font-dialog: "楷体", "KaiTi", "STKaiti", var(--dsh-font-family, serif);
+
+  --tt-font-mono: var(--ds-font-family-code, ui-monospace, "Cascadia Code", Consolas, monospace);
+
+  /* 对白不再放大 —— 字号和行高都与正文一致。 */
+  --tt-prose-size: 15px;
+  --tt-prose-line: 1.95;
+  --tt-meta-size: 12px;
+  --tt-title-size: 11.5px;
+
+  --tt-narration: var(--dsw-alias-label-primary, #eef2f8);
+  --tt-narration-soft: var(--dsw-alias-label-secondary, #b6c2d4);
+
+  /* 对白：暖琥珀。不刺眼、夜间友好，和正文灰白有区分但不打架。
+   * 数值依据（test/contrast-final.mjs）：0.75 垫底上
+   *   纯白壁纸 4.55:1、亮壁纸 5.48:1，均过 4.5 门槛。 */
+  --tt-dialog: #e0b878;
+  --tt-dialog-bg: transparent;
+  --tt-dialog-border: rgba(224, 184, 120, 0.42);
+
+  /* 动作/神态：明确的淡紫，不用宿主的 secondary。
+   * #cdbcf0 在纯白壁纸 4.85:1、亮壁纸 5.84:1（#c4b0e8 只有 4.32，擦边不过）。 */
+  --tt-action: #cdbcf0;
+  --tt-action-soft: transparent;
+
+  --tt-surface: var(--dsw-alias-markdown-code-block, rgba(255, 255, 255, 0.045));
+  --tt-surface-2: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03));
+  --tt-border: var(--dsw-alias-border-l1, rgba(255, 255, 255, 0.12));
+  --tt-radius: 12px;
+
+  --tt-accent: #7fb2e8;
+  --tt-warm: #e5b567;
+  --tt-pink: #e88fa8;
+  --tt-blue: #7fb2e8;
+  --tt-violet: #c4b0e8;
+  --tt-green: #8fd694;
+  --tt-dim: var(--dsw-alias-label-tertiary, #8b95a5);
+}
+
+/* 亮色主题（宿主没有 dark 标记时） */
+body:where([${SCOPE_ATTR}]):not([data-ds-dark-theme]) {
+  /* 浅底上琥珀色会糊，换成同色系的深琥珀/赭石，观感一致且够对比度。 */
+  --tt-dialog: #a9762a;
+  --tt-dialog-bg: transparent;
+  --tt-dialog-border: rgba(169, 118, 42, 0.38);
+  --tt-action: var(--dsw-alias-label-secondary, rgba(15, 30, 60, 0.62));
+  --tt-action-soft: transparent;
+  --tt-surface: rgba(15, 30, 60, 0.035);
+  --tt-surface-2: rgba(15, 30, 60, 0.02);
+  --tt-border: rgba(15, 30, 60, 0.12);
+  --tt-accent: #2a6db5;
+  --tt-warm: #b47d1e;
+  --tt-pink: #c04a67;
+  --tt-blue: #2a6db5;
+  --tt-violet: #6a4fa8;
+  --tt-green: #2e7d32;
+  --tt-dim: rgba(15, 30, 60, 0.52);
+}
+
+/* ═══════════════ 根容器 ═══════════════ */
+.tt-root {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font-family: var(--tt-font-prose);
+  color: var(--tt-narration);
+}
+
+/* ═══════════════ 正文：旁白 / 对白 / 动作 ═══════════════ */
+.tt-prose {
+  font-size: var(--tt-prose-size);
+  line-height: var(--tt-prose-line);
+  letter-spacing: 0.012em;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.tt-narration {
+  color: var(--tt-narration);
+}
+
+/* 对白：换楷体 + 暖琥珀色，字号与旁白完全一致（不放大）。
+ * 左侧竖线保留，作为「这段是说的」的第二个提示；不铺底色块。 */
+/* 对白：楷体 + 暖琥珀，靠字色与字体区分。
+ * 早前用过 border-left 做「竖线提示」，但内联元素换行时
+ * box-decoration-break: clone 会在**每一行**行首各画一条竖线，
+ * 长对白里就变成一串竖线，反而更脏。改成纯字体+颜色。 */
+.tt-speech {
+  color: var(--tt-dialog);
+  font-family: var(--tt-font-dialog);
+  font-size: inherit;
+  line-height: inherit;
+  letter-spacing: 0.02em;
+  background: var(--tt-dialog-bg);
+  padding: 0 2px;
+}
+
+.tt-speech-inner { font-style: normal; }
+
+/* 动作 / 神态：淡色斜体，不铺底色（主人指定「不要色块」）。 */
+.tt-action {
+  color: var(--tt-action);
+  font-style: italic;
+  font-size: inherit;
+  background: var(--tt-action-soft);
+  padding: 0 1px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* ═══════════════ 分区通用标题 ═══════════════ */
+.tt-section-title {
+  font-size: var(--tt-title-size);
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--tt-dim);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tt-section-title::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--tt-border), transparent);
+}
+
+/* ═══════════════ 元信息 ═══════════════ */
+.tt-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--tt-meta-size);
+  font-family: var(--tt-font-mono);
+  color: var(--tt-dim);
+  border: 1px dashed var(--tt-border);
+  border-radius: 999px;
+  padding: 3px 12px;
+  align-self: flex-start;
+}
+.tt-meta-label {
+  color: var(--tt-accent);
+  opacity: 0.85;
+  letter-spacing: 0.08em;
+}
+
+/* ═══════════════ 状态栏：可视化卡片 ═══════════════ */
+.tt-status {
+  border: 1px solid var(--tt-border);
+  border-radius: var(--tt-radius);
+  background: var(--tt-surface);
+  padding: 12px 14px 14px;
+}
+
+.tt-status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px;
+  align-items: start;
+}
+
+.tt-char {
+  border: 1px solid var(--tt-border);
+  border-radius: 10px;
+  background: var(--tt-surface-2);
+  padding: 10px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tt-char-name {
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--tt-warm);
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--tt-border);
+}
+
+.tt-char-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.tt-field { display: inline-flex; }
+
+/* 数值字段：环 + 数字 */
+.tt-field-num { align-items: center; }
+
+.tt-gauge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--tt-font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--tt-accent);
+}
+.tt-gauge-ring {
+  --p: calc(var(--tt-gauge) * 1%);
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background:
+    conic-gradient(var(--tt-accent) var(--p), var(--tt-border) 0);
+  mask: radial-gradient(farthest-side, transparent calc(100% - 3.5px), #000 calc(100% - 3.5px));
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3.5px), #000 calc(100% - 3.5px));
+  flex: none;
+}
+.tt-gauge-text { color: var(--tt-narration); }
+.tt-gauge-label {
+  font-family: var(--tt-font-prose);
+  font-size: 10.5px;
+  font-weight: 400;
+  color: var(--tt-dim);
+  letter-spacing: 0.05em;
+}
+
+.tt-num {
+  font-family: var(--tt-font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--tt-warm);
+  background: var(--tt-surface);
+  border: 1px solid var(--tt-border);
+  border-radius: 999px;
+  padding: 1px 9px;
+}
+
+/* 长描述字段：独占一行 */
+.tt-field-text {
+  flex: 1 1 100%;
+  font-size: 12.5px;
+  line-height: 1.62;
+  color: var(--tt-narration);
+  opacity: 0.88;
+  background: var(--tt-surface);
+  border-left: 2px solid var(--tt-border);
+  border-radius: 0 6px 6px 0;
+  padding: 4px 9px;
+}
+
+/* 短标签：名字 + 值 */
+.tt-field-tag {
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--tt-blue);
+  background: var(--tt-surface);
+  border: 1px solid var(--tt-border);
+  border-radius: 6px;
+  padding: 2px 8px;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.tt-tag-label {
+  font-size: 10px;
+  color: var(--tt-dim);
+  letter-spacing: 0.06em;
+}
+.tt-tag-value { color: var(--tt-blue); font-weight: 500; }
+
+/* 数值标签（非 0-100 的数值） */
+.tt-num-label {
+  font-size: 10px;
+  color: var(--tt-dim);
+  margin-left: 4px;
+  letter-spacing: 0.05em;
+}
+
+/* 长描述：带字段名 */
+.tt-text-label {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--tt-warm);
+  margin-right: 7px;
+  vertical-align: 1px;
+  white-space: nowrap;
+}
+
+/* 心声：斜体引用块，与属性区分 */
+.tt-char-inner {
+  font-size: 12.5px;
+  line-height: 1.68;
+  font-style: italic;
+  color: var(--tt-narration);
+  opacity: 0.82;
+  background: var(--tt-surface);
+  border-left: 2px solid var(--tt-violet);
+  border-radius: 0 6px 6px 0;
+  padding: 5px 10px;
+  margin-top: 2px;
+}
+
+/* 媒体文件名：等宽、弱化、小图钉 */
+.tt-field-media {
+  font-family: var(--tt-font-mono);
+  font-size: 10.5px;
+  color: var(--tt-dim);
+  border: 1px dashed var(--tt-border);
+  border-radius: 5px;
+  padding: 1px 6px;
+  opacity: 0.85;
+}
+
+/* ═══════════════ 社交动态 ═══════════════ */
+.tt-social {
+  border: 1px solid var(--tt-border);
+  border-radius: var(--tt-radius);
+  background: var(--tt-surface);
+  padding: 12px 14px 14px;
+}
+.tt-post {
+  border-left: 2px solid var(--tt-pink);
+  border-radius: 0 8px 8px 0;
+  background: var(--tt-surface-2);
+  padding: 9px 12px;
+  margin-top: 8px;
+}
+.tt-post-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.tt-post-name {
+  font-weight: 700;
+  font-size: 13.5px;
+  color: var(--tt-pink);
+}
+.tt-post-handle {
+  font-family: var(--tt-font-mono);
+  font-size: 11px;
+  color: var(--tt-dim);
+}
+.tt-social-stats {
+  font-family: var(--tt-font-mono);
+  font-size: 10.5px;
+  color: var(--tt-warm);
+  margin-left: auto;
+  border: 1px solid var(--tt-border);
+  border-radius: 999px;
+  padding: 0 8px;
+}
+.tt-post-text {
+  font-size: 13.5px;
+  line-height: 1.78;
+  margin: 0;
+  color: var(--tt-narration);
+}
+.tt-social-append {
+  margin-top: 7px;
+  font-size: 12px;
+  line-height: 1.65;
+  color: var(--tt-narration-soft);
+  border-left: 2px dashed var(--tt-border);
+  padding-left: 9px;
+}
+.tt-social-extra {
+  display: flex;
+  gap: 7px;
+  margin-top: 7px;
+  flex-wrap: wrap;
+}
+.tt-social-extra > span {
+  font-family: var(--tt-font-mono);
+  font-size: 10.5px;
+  color: var(--tt-dim);
+  border: 1px solid var(--tt-border);
+  border-radius: 999px;
+  padding: 0 8px;
+}
+
+/* ═══════════════ 聊天消息 ═══════════════ */
+.tt-chat {
+  border: 1px solid var(--tt-border);
+  border-radius: var(--tt-radius);
+  background: var(--tt-surface);
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.tt-chat-time {
+  font-family: var(--tt-font-mono);
+  font-size: 10.5px;
+  color: var(--tt-dim);
+}
+.tt-bubble {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  background: var(--tt-surface-2);
+  border: 1px solid var(--tt-border);
+  border-radius: 4px 12px 12px 12px;
+  padding: 6px 11px;
+}
+.tt-bubble-from {
+  flex: none;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--tt-blue);
+  letter-spacing: 0.05em;
+}
+.tt-bubble-text {
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--tt-narration);
+  overflow-wrap: anywhere;
+}
+
+/* ═══════════════ 推荐 / 列表 ═══════════════ */
+.tt-feed {
+  border: 1px solid var(--tt-border);
+  border-radius: var(--tt-radius);
+  background: var(--tt-surface);
+  padding: 12px 14px 14px;
+}
+.tt-feed-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.tt-feed-list > li {
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--tt-narration-soft);
+  padding-left: 14px;
+  position: relative;
+}
+.tt-feed-list > li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 0.72em;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--tt-warm);
+  opacity: 0.7;
+}
+.tt-feed[data-variant="bilibili"] .tt-feed-list > li::before { background: var(--tt-pink); }
+
+/* ═══════════════ 选项：可点击的卡片 ═══════════════ */
+.tt-choices {
+  border: 1px solid var(--tt-border);
+  border-radius: var(--tt-radius);
+  background: linear-gradient(160deg, var(--tt-surface), transparent);
+  padding: 12px 14px 14px;
+}
+.tt-choices-hint {
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: var(--tt-dim);
+  opacity: 0.75;
+  text-transform: none;
+  margin-left: 4px;
+}
+.tt-choice-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  counter-reset: none;
+}
+.tt-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border: 1px solid var(--tt-border);
+  border-radius: 9px;
+  background: var(--tt-surface-2);
+  padding: 8px 12px;
+  transition: border-color 0.14s, background 0.14s, transform 0.14s, opacity 0.14s;
+  cursor: pointer;
+  user-select: none;
+}
+.tt-choice:hover {
+  border-color: var(--tt-accent);
+  background: var(--tt-dialog-bg);
+  transform: translateX(2px);
+}
+.tt-choice:focus-visible {
+  outline: 2px solid var(--tt-accent);
+  outline-offset: 1px;
+}
+/* 发送中：整组变暗并禁止再点 */
+.tt-choice-busy {
+  opacity: 0.45;
+  cursor: progress;
+}
+.tt-choice-sending {
+  border-color: var(--tt-warm);
+  opacity: 1;
+}
+/* 发送成功：勾一下，明确「已经替你发出去了」 */
+.tt-choice-sent {
+  border-color: var(--tt-warm);
+  opacity: 1;
+}
+.tt-choice-sent .tt-choice-index::after {
+  content: "✓";
+  position: absolute;
+  opacity: 0;
+}
+.tt-choice-sent .tt-choice-index {
+  color: var(--tt-warm);
+  border-color: var(--tt-warm);
+}
+/* 发送失败：短暂标红 */
+.tt-choice-failed {
+  border-color: #e0716f !important;
+  background: rgba(224, 113, 111, 0.10) !important;
+  opacity: 1 !important;
+}
+.tt-choice-index {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-family: var(--tt-font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--tt-accent);
+  border: 1px solid var(--tt-accent);
+  opacity: 0.9;
+  margin-top: 1px;
+}
+.tt-choice-text {
+  font-size: 13.5px;
+  line-height: 1.72;
+  color: var(--tt-narration);
+  overflow-wrap: anywhere;
+}
+
+/* ═══════════════ 平台内容块（peachhub） ═══════════════ */
+.tt-hub {
+  border: 1px solid var(--tt-border);
+  border-radius: var(--tt-radius);
+  background: var(--tt-surface);
+  padding: 12px 14px 14px;
+}
+.tt-hub-card {
+  border-left: 2px solid var(--tt-pink);
+  border-radius: 0 8px 8px 0;
+  background: var(--tt-surface-2);
+  padding: 10px 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.tt-hub-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--tt-pink);
+  letter-spacing: 0.02em;
+}
+.tt-hub-params {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.tt-hub-param {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  border: 1px solid var(--tt-border);
+  border-radius: 999px;
+  background: var(--tt-surface);
+  padding: 1px 9px;
+}
+.tt-hub-param-label {
+  font-size: 10px;
+  color: var(--tt-dim);
+  letter-spacing: 0.05em;
+}
+.tt-hub-param-value {
+  font-family: var(--tt-font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--tt-warm);
+}
+.tt-hub-desc {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.78;
+  color: var(--tt-narration);
+  white-space: pre-wrap;
+}
+.tt-hub-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.tt-hub-tag {
+  font-size: 11px;
+  color: var(--tt-blue);
+  background: var(--tt-surface);
+  border: 1px solid var(--tt-border);
+  border-radius: 6px;
+  padding: 1px 7px;
+}
+.tt-hub-comments {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-top: 1px dashed var(--tt-border);
+  padding-top: 7px;
+}
+.tt-hub-comment {
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--tt-narration-soft);
+}
+
+/* ═══════════════ 窄屏 ═══════════════ */
+@media (max-width: 560px) {
+  body:where([${SCOPE_ATTR}]) {
+    --tt-prose-size: 14.5px;
+  }
+  .tt-status-grid { grid-template-columns: 1fr; }
+}
+
+/* 尊重「减少动态效果」 */
+@media (prefers-reduced-motion: reduce) {
+  .tt-choice { transition: none; }
+  .tt-choice:hover { transform: none; }
+}
+`;
+}

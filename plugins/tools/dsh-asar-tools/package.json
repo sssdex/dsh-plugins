@@ -1,0 +1,39 @@
+{
+  "name": "dsh-asar-tools",
+  "version": "0.1.0",
+  "description": "让 ASAR 归档可被检索：提供 asar_list / asar_grep，绕开原生 rg.exe 读不了 app.asar 的限制。",
+  "type": "module",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "README.md",
+    "selftest.mjs"
+  ],
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "test": "node --import ./test/shim-loader.mjs selftest.mjs && node --import ./test/shim-loader.mjs test/edge.mjs && node --import ./test/shim-loader.mjs test/asar-patch-sim.mjs"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-tools": "*"
+  },
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "asar",
+    "archive",
+    "search"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.13.0"
+  }
+}

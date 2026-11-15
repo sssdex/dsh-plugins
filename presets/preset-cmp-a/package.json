@@ -1,0 +1,16 @@
+{
+  "name": "@local/dsh-preset-lean",
+  "version": "1.0.0",
+  "private": true,
+  "description": "精简·lean —— 纯 YAML 的保守版 standard 预设（无插件代码）",
+  "files": [
+    "cordis.patch.yml",
+    "README.md",
+    "verify.mjs"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

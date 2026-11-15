@@ -1,0 +1,52 @@
+{
+  "id": "memory-compact-ui",
+  "title": "dsh-memory 输入栏「记忆权限」按钮与工具条统一",
+  "why": "该按钮原是 28px 带描边实底卡片（border-l1 + bg-layer 55%、9px 圆角），并用整块边框/底色编码三档限制等级，还带一个作用域数字，在 composer 工具条里比宿主的图标按钮重一档。改成与宿主完全同体例：28×28 纯图标、999px 圆角、透明底、label-secondary、16px 图标（= 宿主模型座位 IconDataOutlineRegular 的尺寸）、hover 才出底。按钮上不再有数字：作用域数量与限制等级只由 title / aria-label / 面板表达。间距：wrap 两侧各 -3.5px 把宿主 .standardControls 的 gap:12px 收成 5px；记忆按钮是最右一个，还要 margin-right:-7px，让它与右侧宿主的模型选择器之间也是 5px（那个间隙跨 slot 边界）。",
+  "package": "@restregular/dsh-memory",
+  "file": "lib/client.js",
+  "testedWith": [
+    "0.31.0"
+  ],
+  "pristineSha256": "9C2A05F842B80B653171621C07699EC72BFD9F50A024F88516D250FB705232E4",
+  "patchedSha256": "1FE9E2B996BC853DD81A92ACBF2319DE91DEFA4E5D4EDF2607A9D7E45BCC9356",
+  "pristineMarkers": [
+    ".mem-scope-btn{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 9px;border:1px solid var(--dsw-alias-border-l1)",
+    ".mem-scope-btn.is-normal{border-color:"
+  ],
+  "appliedMarkers": [
+    ".mem-scope-btn{display:inline-flex;align-items:center;justify-content:center;gap:0;width:28px;height:28px",
+    ".mem-scope-wrap{display:inline-flex;min-width:0;margin-inline:-3.5px;margin-right:-7px}"
+  ],
+  "ops": [
+    {
+      "tag": "scope wrap: 收紧与相邻控件的间距（5px 口径）",
+      "old": "      '.mem-scope-wrap{display:inline-flex;min-width:0}',",
+      "new": "      '.mem-scope-wrap{display:inline-flex;min-width:0}',"
+    },
+    {
+      "tag": "scope btn: 28px 描边实底卡片（带数字）→ 28×28 纯图标按钮",
+      "old": "      '.mem-scope-btn{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 9px;border:1px solid var(--dsw-alias-border-l1);border-radius:9px;background:color-mix(in srgb,var(--dsw-alias-bg-layer-1) 55%,transparent);color:var(--dsw-alias-label-secondary);font-size:12px;line-height:1;cursor:pointer;flex:none;transition:border-color .12s ease,color .12s ease,background .12s ease}',",
+      "new": "      '.mem-scope-btn{display:inline-flex;align-items:center;justify-content:center;gap:0;width:28px;height:28px;padding:0;border:0;border-radius:999px;background:transparent;color:var(--dsw-alias-label-secondary);font-size:13px;line-height:20px;font-variant-numeric:tabular-nums;cursor:pointer;flex:none;transition:background .12s ease,color .12s ease}',"
+    },
+    {
+      "tag": "scope btn hover / 展开态：只换底色，不再改描边",
+      "old": "      '.mem-scope-btn:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}',",
+      "new": "      '.mem-scope-btn:hover,.mem-scope-btn[aria-expanded=true]{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-secondary)}',"
+    },
+    {
+      "tag": "限制等级：整块描边染色 → 按钮上不再有任何等级装饰",
+      "old": "      // 0.20.0:数字 = 当前生效的作用域数量;边框样式 = 限制等级\r\n      //   绝对限制 = 橙黄实线 · 普通限制 = 蓝色实线 · 无限制 = 灰色虚线\r\n      '.mem-scope-btn.is-absolute{border-color:var(--dsw-alias-state-warn-primary,#d9a23b);color:var(--dsw-alias-state-warn-primary,#d9a23b);background:color-mix(in srgb,var(--dsw-alias-state-warn-primary,#d9a23b) 10%,transparent)}',\r\n      '.mem-scope-btn.is-normal{border-color:var(--dsw-alias-state-business-primary,#4176e6);color:var(--dsw-alias-state-business-primary,#4176e6);background:color-mix(in srgb,var(--dsw-alias-state-business-primary,#4176e6) 10%,transparent)}',\r\n      '.mem-scope-btn.is-none{border:1px dashed color-mix(in srgb,var(--dsw-alias-label-secondary) 55%,var(--dsw-alias-border-l1));color:var(--dsw-alias-label-secondary);background:color-mix(in srgb,var(--dsw-alias-bg-layer-1) 55%,transparent)}',\r\n      '.mem-scope-btn.is-absolute:hover,.mem-scope-btn.is-normal:hover,.mem-scope-btn.is-none:hover{background:var(--dsw-alias-interactive-bg-hover)}',",
+      "new": "      // 本地补丁：数字与限制等级不再画在按钮上（会让按钮比同一行的宿主控件重一档），\r\n      //   完整信息见 title / aria-label / 面板。\r\n"
+    },
+    {
+      "tag": "scope 图标 14 → 16，并去掉按钮上的作用域数字",
+      "old": "          h(NavLineIcon, { size: 14 }),\r\n          data === null ? null : h('span', null, String(accessibleCount)),\r\n",
+      "new": "          h(NavLineIcon, { size: 16 }),\r\n"
+    },
+    {
+      "tag": "记忆图标描边 1.3 → 1.5（与宿主 16px 图标一致；轨迹行 12px 徽标不动）",
+      "old": "    function NavLineIcon({ size = 16 } = {}) {\r\n      return h('svg', { width: size, height: size, viewBox: NAV_VIEW_BOX, fill: 'none', 'aria-hidden': 'true' },\r\n        h('rect', { ...NAV_FRAME, fill: 'none', stroke: 'currentColor', strokeWidth: 1.3 }),\r\n        h('path', { d: NAV_RING, fill: 'none', stroke: 'currentColor', strokeWidth: 1.3, strokeLinecap: 'round', strokeLinejoin: 'round' }),\r\n      )\r\n    }",
+      "new": "    function NavLineIcon({ size = 16 } = {}) {\r\n      return h('svg', { width: size, height: size, viewBox: NAV_VIEW_BOX, fill: 'none', 'aria-hidden': 'true' },\r\n        h('rect', { ...NAV_FRAME, fill: 'none', stroke: 'currentColor', strokeWidth: 1.5 }),\r\n        h('path', { d: NAV_RING, fill: 'none', stroke: 'currentColor', strokeWidth: 1.5, strokeLinecap: 'round', strokeLinejoin: 'round' }),\r\n      )\r\n    }"
+    }
+  ]
+}

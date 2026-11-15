@@ -1,0 +1,30 @@
+{
+  "name": "dsh-client-patchguard",
+  "version": "0.1.0",
+  "description": "DeepSeek Harness 客户段补丁守卫：在每次启动时把 settings.section 等本地补丁重新打进已安装的插件客户端 bundle，并保证不写穿 pnpm 内容寻址存储。",
+  "type": "module",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "recipes/"
+  ],
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "patch"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.13.0"
+  }
+}

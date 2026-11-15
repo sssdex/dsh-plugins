@@ -1,0 +1,14 @@
+# dsh-workspace-agent-preset bundle layer.
+# Installing the package (Plugins page or plugin_manager install_bundle) inserts
+# this row into the profile; the user's own cordis.patch.yml may still override or
+# disable it by id.
+#
+# Optional configuration, in your profile's cordis.patch.yml:
+#
+#   - id: workspace-agent-preset
+#     config:
+#       enabled: true          # false disables the session-creation injection
+#       log: false             # true writes each injected preset to the Host log
+- insert:
+    - id: workspace-agent-preset
+      name: dsh-workspace-agent-preset

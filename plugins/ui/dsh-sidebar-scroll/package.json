@@ -1,0 +1,34 @@
+{
+  "name": "dsh-sidebar-scroll",
+  "version": "0.1.0",
+  "private": true,
+  "description": "让 DSH 右侧栏每个 tab 的正文可以上下滚动：修掉核心 .tabBody 的 height:100% + overflow:hidden 把超长内容裁掉、外层 .paneBody 又没有溢出可滚、导致条目上下都够不到的问题。",
+  "type": "module",
+  "main": "lib/index.js",
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web"
+    }
+  },
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "sidebar",
+    "scroll"
+  ],
+  "license": "MIT"
+}

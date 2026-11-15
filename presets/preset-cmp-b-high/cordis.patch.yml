@@ -1,0 +1,214 @@
+# 冲刺·sprint —— 激进派预设：用代码插件碰宿主平面的 74.6%。
+#
+# 设计要点（实测依据见 README.md / _header_budget.json）：
+#   - persona complete: true + includeRuntimeContext: false —— 系统提示只剩下面那段，
+#     DSH 自带的工具引导段全部被吞掉，所以工具纪律必须自己写全。
+#   - restrict.js 用 ctx.tools.restrict({deny}) 把宿主平面 70 个工具挡在模型视野外，
+#     只 KEEP 22 个（21 个本预设自己挂 / 祖先层已挂的，加 working_directory）。
+#   - YAML 只挂「必需且不能被祖先层替代」的行，不照抄 standard 的 22 行。
+#
+# 为什么不挂这些（都是刻意删的，不是忘的）：
+#   tool-schedule / tool-goal / command-goal / plan-mode / delegation 组 / workflow-ptc
+#     → 实测调用 0~11 次，schema 却占 1,978 + 428 + 117 tok。sprint 不接调度、不做团队编排。
+#   tool-plugin-manager / tool-plugin-market → 装插件时切回 standard。
+#   tool-todo 之外没有 planning 组 → exit_plan_mode 实测 0 次。
+#   tool-workspace-dependencies → **不要在这里声明**。它的 Config.source 是必填的绝对路径，
+#     Desktop 已在 profile 层通过 desktop-office 用 --primary-runtime 挂载过，
+#     重复声明会报 "invalid config: $.source missing required value"（2026-11-11 踩过）。
+#   tool-agent-team 等 Team 工具 → 由 profile 的 agent-team bundle 全局挂载，
+#     且它们注册在 agent 自己的 scope 上，preset 层 restrict() 挡不掉，只能关 bundle。
+#
+# 踩坑备忘：
+#   - config.id 不能叫 standard/minimal/ptc/cordis —— shipped 同名会赢，自定义静默失效。
+#     这里用 sprint。
+#   - 声明行的 id（preset-sprint）是 Loader 编辑地址；config.id（sprint）是会话身份。
+#   - dsh-tool-fs-search 的 sampleOverCapGlobResults 是 required 且无默认值，必须显式写。
+#   - compaction 的 tool-result-pruner 阈值刻意保持 8192，不调小：
+#     surfaceOp: replace 会重写历史消息 → 破 cache。
+- insert:
+    - id: preset-sprint-high
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: sprint-high
+        name: 冲刺·sprint-high
+        description: 激进提速。代码插件把宿主平面 70 个工具挡在模型视野外，只留 22 个；提示词写死动作纪律，少想、少跑、改完就答。
+        order: 22
+        plugins:
+          # ── 身份：整段系统提示就是这一段 ────────────────────────────
+          # complete: true → 装配后只剩这段前缀。身份/后缀/工具引导/监听器都无法再追加。
+          #   ⚠ 代价：DSH 自带的 read-before-write、pwsh 用法、工具选型提示全部消失。
+          #     这个预设的全部行为依据就是下面这段文本，改它等于改整个 agent 的脑子。
+          # includeRuntimeContext: false → 去掉每轮运行上下文快照（~824 tok/轮）。
+          #   注意 required 的上下文仍会保留（system-prompt 的 assemble() 里写着）。
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              complete: true
+              includeRuntimeContext: false
+              prefix: |
+                你是冲刺型执行 agent。目标是把用户要的东西快速、准确地做出来。
+
+                ## 动作纪律（这是本预设的硬约束）
+
+                1. **不预告工具调用。** 想调就直接调，不要先写"我先看一下……""让我搜索一下……"。
+                2. **不复述内容。** 读到的文件内容、命令输出、网页正文，不要抄回给用户。用户能看到工具结果。
+                3. **不写进度汇报。** 不要"正在处理""已经完成第一步"这类话。
+                4. **独立调用一次发出。** 相互没有依赖的 read/grep/glob/web_search 放在同一轮里并行调用；有依赖才串行。
+                5. **不反复读同一个文件。** 读过一次、或用 write/edit 刚改过，你已知它当前的样子，不要回头再读。
+                6. **改完就答。** 写入或编辑成功后，一两句话说清改了什么就结束。不回读确认、不"验证一下"、不贴 diff。
+                7. **长命令走后台。** 预计超过约 30 秒的命令，用 pwsh 的后台选项提交，然后继续做别的；需要结果时用 job_output 取。
+                8. **批量任务写成脚本。** 合并、拆分、批量改名、编码转换、正则替换——写一个 pwsh 脚本一次跑完，不要逐条工具调用。
+                9. **结束步的答案照写全。** 前面不啰嗦，但结论、路径、注意事项必须完整；不要为了短而漏信息。
+                10. **grep / glob 一律限定目录，不要对整个工作区搜。** 搜索前先想清楚目标在哪个子目录，把 path 写成那个具体目录（例如 `...\project\src`），不要图省事写盘符根或工作区根。工作区里往往有大量无关文件（别的项目的源码、日志、缓存），全盘扫一次会抓回几万字符的噪音，既费钱又把上下文冲乱。同理 `pwsh` 里 `Get-ChildItem` / `Select-String` 也要带 `-Path` 收窄范围。
+                11. **任务够小就直接做，不要为了省 token 多做一步探查。** 第 10 条是防「输出爆炸」，不是让你先探路。如果一个任务一眼能看出只需要一次读取/一次命令就能完成（读一个小文件、答一个账、建一个文件），**直接做那一步**，不要先额外跑一个 glob/grep/试读来"摸清情况"。多跑一步的代价（一步往返约 3–6 秒）远大于它可能省下的几个 token。
+
+                ## 工具怎么用
+
+                **新建文件 → 直接 write。** 不需要先 read（read 只对已存在的文件有意义）。内容一次写全，不要先写空壳再补。
+
+                **修改已有文件 → 先 read 再 edit，一次到位。**
+                - read 用 offset/limit 只取需要的行段，不要把整个大文件拉进来。
+                - edit 的 old_string 要带足够上下文保证全文件唯一；不唯一就扩上下文。
+                - 一个文件改多处 → 一次 write 重写整个文件，通常比三次 edit 更快也更不容易错。
+
+                **找东西 → glob 定位路径，grep 找内容，最后才 read。** 不要为了找一句话把十几个文件全读一遍。
+
+                **需要 python/node 的绝对路径 → load_workspace_dependencies。**
+
+                **docx / xlsx / pptx → 先调 skill 拿对应打法**（office-docx / office-xlsx / office-pptx），再动手。不要盲写 OOXML。
+
+                **其他格式转文字 → convert_to_markdown**（docx/pptx/xlsx/html/csv 都支持）。
+
+                **PDF → 只有一条路：read_pdf。** 抽不出文字就是扫描件，改用 async_parse_pdf 提交后台，拿回 job_id 后用 job_output 取结果。不要 pip install 任何 OCR 库、不要调 tesseract、不要用 read_image 一页页转录——那样更慢、更贵、还会掉字。mineru 报错就先把错误原样说出来，不要擅自换方案。
+
+                **改工作目录 → working_directory。** 不要靠 cd 拼在命令前面。
+
+                ## 输出
+
+                完成后的回复：做了什么、文件在哪、要注意什么。不写"我已完成以下工作"这种开场，不列不必要的清单，不加 emoji，不复述用户的话。
+
+                只读不写的时候（用户只是问文件里有什么），直接给答案。
+
+                不清楚要什么且猜错代价明显时，用 ask_user_question 问一次；其余按最合理的默认做法直接做，做完说明取舍。
+
+          # ── 工具收窄：把宿主平面 70 个工具挡在模型视野外 ─────────────
+          # 实测：standard header 平均 25,399 tok，其中 preset YAML 行只占 25.4%，
+          # 74.6% 是宿主/三方插件挂的（fast-solver 一行工具都不声明，header 仍 84 工具 /
+          # 109,143 B ≈ 27,016 tok）。删 YAML 行碰不到那部分，只有 restrict() 能碰。
+          # file-fast 实测把它压到 24 工具 / 23,962 B ≈ 5,931 tok；本预设 KEEP 22 个，
+          # 其中 9 个 Team 工具是 preset 层挡不掉的（见 restrict.js 注释）。
+          #
+          # 两道幂等闸（applying + lastDenyKey）缺一不可：restrict 自身会触发 tools/change，
+          # 而本插件就在 tools/change 上重跑 → 无出口微任务循环 → host 满核空转，
+          # 约两分半被外壳掐掉。2026-11-11 实机踩过。
+          - id: sprint-high-restrict
+            name: '@local/dsh-preset-sprint-high/restrict'
+
+          # ── 思考减负：创建会话时把推理强度降一档 ────────────────────
+          # 实测：>5000 思考字符的步只占 10.8%，却吃掉 45.9% 的 decode 时间；
+          # max 档中位思考 552 字符 vs high 档 363 字符。
+          # 插件先查 ctx.llm.resolveModelInfo() 该路由真实支持的档位（不是 resolveModel，
+          # 后者不存在，错误会被 catch 吞掉变成静默失效），不支持就不动。
+          # 本机 profile 现为 high（deepseek-v4.1-flash 的 supportedEfforts: low/high/max），
+          # 所以这里设 low 才会真的降档；设 high 等于维持现状。
+          - id: sprint-high-tune
+            name: '@local/dsh-preset-sprint-high/tune'
+            config:
+              reasoningEffort: high
+
+          # ── 读写工具本体 ────────────────────────────────────────────
+          # readLimit 2000：read 一次最多 2000 行。太大容易把整个大文件灌进上下文，
+          # 太小会逼模型多读几次（每次都算一步）。
+          - id: tool-fs
+            name: '@deepseek-ai/dsh-tool-fs'
+            config:
+              applyPatch: false
+              readLimit: 2000
+          # sampleOverCapGlobResults 是 required 无默认值，必须显式写。
+          - id: tool-fs-search
+            name: '@deepseek-ai/dsh-tool-fs-search'
+            config:
+              sampleOverCapGlobResults: false
+          - id: tool-pwsh
+            name: '@deepseek-ai/dsh-tool-pwsh'
+            disabled: !!js process.platform !== 'win32'
+          - id: tool-bash
+            name: '@deepseek-ai/dsh-tool-bash'
+            disabled: !!js process.platform === 'win32'
+
+          # ── 后台作业：async_parse_pdf 的正确性依赖这三个 ─────────────
+          # jobs 插件默认 completionDelivery: wakeup（完成会主动唤醒），
+          # 这里不动默认值：改成 quiet 就得靠模型自己轮询，反而多跑步骤。
+          - id: tool-jobs
+            name: '@deepseek-ai/dsh-tool-jobs'
+
+          # ── 技能：office-* 系列在这 ──────────────────────────────────
+          # catalogDescriptionMaxLength 500 → 120：技能目录每条描述截断到 120 字符。
+          # 目录本身每条 500 字符上限，本机技能多，实测这一刀约省 900+ tok/轮。
+          # 技能正文不受影响（skill 工具的返回是全文）。
+          - id: skill-filesystem
+            name: '@deepseek-ai/dsh-skill-filesystem'
+          - id: tool-skill
+            name: '@deepseek-ai/dsh-tool-skill'
+            config:
+              catalogDescriptionMaxLength: 120
+
+          # ── 查资料 ──────────────────────────────────────────────────
+          # web_search 314 B + web_fetch 234 B = 548 B ≈ 136 tok，是单位 token
+          # 收益最高的两个工具（实测调用 216 / 745 次）。
+          - id: tool-web
+            name: '@deepseek-ai/dsh-tool-web'
+            config:
+              fetch: true
+              searchTimeoutMs: 60000
+
+          # ── 任务清单 / 提问 / 交付 ──────────────────────────────────
+          - id: tool-todo
+            name: '@deepseek-ai/dsh-tool-todo'
+            config:
+              allowParallelInProgress: true
+          - id: tool-ask-user
+            name: '@deepseek-ai/dsh-tool-ask-user'
+          - id: present
+            name: '@deepseek-ai/dsh-tool-present'
+
+          # ── working_directory 不在这里声明 ──────────────────────────
+          # @deepseek-ai/dsh-tool-working-directory 由 dsh-base bundle 全局挂载
+          # （dsh-base/cordis.patch.yml:169），祖先层已注册的同名工具对预设可见。
+          # 这里再挂一次会因重复注册报错。已在 restrict.js 的 KEEP 里放行。
+
+          # ── 压缩：兜底 + 主动截长输出 ───────────────────────────────
+          #
+          # 【2026-11-11 第二次修正：阈值改回官方默认 8192】
+          #
+          # 上一轮我曾把阈值压到 3072/2048/512，想用它打掉 T5 那 11,349 tok 的未缓存输入。
+          # 实测 9 格 sprint 会话：**prune 事件 0 次，一次都没触发**，改了个寂寞。
+          #
+          # 根因（dsh-compaction-tool-result-pruner/README.zh.md 原文）：
+          #   「修剪只在压缩触发条件满足后运行：dsh-compaction-basic 在压力或溢出确认后、
+          #     选择要压缩的内容之前调用它。**低于压力时不会修剪任何内容**。」
+          #
+          # 也就是说本插件不是「工具结果超阈值就截」，而是「上下文压力够大、要压缩了，
+          # 才顺手把超阈值的工具结果截短」。短任务永远到不了那个压力点。
+          # 把阈值调小**不能**让它在低压力下提前工作——它只是让真正压缩时截得更狠。
+          #
+          # 结论：这个字段在当前使用场景（短/中任务）里属于无效旋钮。改回 8192 保持默认，
+          # 少一处我与上游不一致的地方；真需要治「大输出」应该靠 persona 事前约束
+          # （见 personа 第 10、11 条），那是实测有效的方向。
+          - id: compaction
+            name: cordis:group
+            group: true
+            isolate:
+              compaction: true
+              toolResultPruner: true
+            config:
+              - id: compaction-basic
+                name: '@deepseek-ai/dsh-compaction-basic'
+              - id: command-compact
+                name: '@deepseek-ai/dsh-command-compact'
+              - id: tool-result-pruner
+                name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+                config:
+                  thresholdChars: 8192
+                  headChars: 4096
+                  tailChars: 1024

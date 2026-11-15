@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Workspace presets",
+    "description": "Set a default agent preset, model and reasoning level per workspace for new sessions, from the Settings page."
+  }
+}

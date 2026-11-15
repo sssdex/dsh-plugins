@@ -1,0 +1,32 @@
+{
+  "id": "imagegen-settings-section",
+  "title": "image-gen 设置页分区（settings.section）",
+  "why": "同样把 settings.plugin.item 换成 settings.section，让 image-gen 在设置页有独立分区。",
+  "package": "dsh-image-gen",
+  "file": "lib/client.js",
+  "testedWith": [
+    "0.10.0"
+  ],
+  "pristineSha256": "88A6DF9AC4087355E21D0AD91C341C837FA45212DA2E84017C0B2B0593C68886",
+  "patchedSha256": "196769E13297597C8980FC7E0B103ED0C017BE96F850A53975FA255961122ACC",
+  "pristineMarkers": [
+    "name: \"settings.plugin.item\",\n\t\t\t\t\tkey: IMAGE_GENERATION_NAMESPACE,",
+    "jsxs)(\"li\", {\n\t\t\t\tclassName: \"dsh-ig-card\","
+  ],
+  "appliedMarkers": [
+    "name: \"settings.section\",\n\t\t\t\t\tid: \"image-generation\",",
+    "jsxs)(\"div\", {\n\t\t\t\tclassName: \"dsh-ig-card\","
+  ],
+  "ops": [
+    {
+      "tag": "settings.plugin.item -> settings.section",
+      "old": "\t\t\t\towner.slots.inject(\"settings.plugin.item\", () => ownerRegister({\n\t\t\t\t\tname: \"settings.plugin.item\",\n\t\t\t\t\tkey: IMAGE_GENERATION_NAMESPACE,\n\t\t\t\t\tinject: injectSettingsFace\n\t\t\t\t}, ImageGenerationSettingsCard));",
+      "new": "\t\t\t\towner.slots.inject(\"settings.section\", () => ownerRegister({\n\t\t\t\t\tname: \"settings.section\",\n\t\t\t\t\tid: \"image-generation\",\n\t\t\t\t\torder: 160,\n\t\t\t\t\tlabel: () => (locale?.getSnapshot?.()?.active?.startsWith(\"en\") ? DICT.en : DICT.zh).title,\n\t\t\t\t\tlocale,\n\t\t\t\t\tinject: injectSettingsFace\n\t\t\t\t}, ImageGenerationSettingsCard));"
+    },
+    {
+      "tag": "card root li -> div",
+      "old": "\t\t\treturn (0, react_jsx_runtime.jsxs)(\"li\", {\n\t\t\t\tclassName: \"dsh-ig-card\",",
+      "new": "\t\t\treturn (0, react_jsx_runtime.jsxs)(\"div\", {\n\t\t\t\tclassName: \"dsh-ig-card\","
+    }
+  ]
+}

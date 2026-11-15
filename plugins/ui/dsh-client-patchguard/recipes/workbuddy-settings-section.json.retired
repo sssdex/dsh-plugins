@@ -1,0 +1,37 @@
+{
+  "id": "workbuddy-settings-section",
+  "title": "WorkBuddy 设置页分区（settings.section）",
+  "why": "上游 dsh-connect-workbuddy 只注册 plugins.* 与 conversation.* 槽位，从不注册 settings.section，因此设置页里没有它自己的分区。本补丁加一个 settings.section 注册，并把卡片根节点 li 改成 div（设置分区容器是 div）。",
+  "package": "dsh-connect-workbuddy",
+  "file": "lib/client.js",
+  "testedWith": [
+    "5.16.0"
+  ],
+  "pristineSha256": "11511F5AEC9FD50BA2D60A970E25139CC7480952941BF389B61A4A3B0504075C",
+  "patchedSha256": "FFA7131D267EBA411A395656FC25E21CC2B3345ACC9344107956D228D9270E2B",
+  "pristineMarkers": [
+    "jsxs)(\"li\", {\n\t\t\t\tclassName: `dsm-plugin-card${open"
+  ],
+  "appliedMarkers": [
+    "Register the settings-dialog section",
+    "registerSection(),",
+    "jsxs)(\"div\", {\n\t\t\t\tclassName: `dsm-plugin-card${open"
+  ],
+  "ops": [
+    {
+      "tag": "add registerSection()",
+      "old": "\t\t\t\tconst registerCard = (slotName, key) => {",
+      "new": "\t\t\t\t/**\n\t\t\t\t* Register the settings-dialog section (a LIST slot: id + order, no key).\n\t\t\t\t*\n\t\t\t\t* The card is injected `view: \"page\"` so it opens expanded inside the\n\t\t\t\t* settings page instead of showing only a collapsed header.\n\t\t\t\t*/\n\t\t\t\tconst registerSection = () => {\n\t\t\t\t\ttry {\n\t\t\t\t\t\treturn ctx.slots.inject(\"settings.section\", () => ctx.slots.register({\n\t\t\t\t\t\t\tname: \"settings.section\",\n\t\t\t\t\t\t\tid: \"workbuddy\",\n\t\t\t\t\t\t\torder: 180,\n\t\t\t\t\t\t\tlabel: () => \"WorkBuddy\",\n\t\t\t\t\t\t\tinject: () => settingsScope === void 0 ? {\n\t\t\t\t\t\t\t\tt,\n\t\t\t\t\t\t\t\tview: \"page\"\n\t\t\t\t\t\t\t} : {\n\t\t\t\t\t\t\t\tt,\n\t\t\t\t\t\t\t\tsettingsScope,\n\t\t\t\t\t\t\t\tview: \"page\"\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t}, WorkBuddyCard));\n\t\t\t\t\t} catch (error) {\n\t\t\t\t\t\tconsole.error(`[dsh-connect-workbuddy] settings section failed to register (host provider unaffected):`, error);\n\t\t\t\t\t\treturn;\n\t\t\t\t\t}\n\t\t\t\t};\n\t\t\t\tconst registerCard = (slotName, key) => {"
+    },
+    {
+      "tag": "call registerSection()",
+      "old": "\t\t\t\tconst registerAllSlots = () => [\n\t\t\t\t\t...WORKBUDDY_CARD_KEYS.map((key) => registerCard(\"plugins.bundle.config\", key)),",
+      "new": "\t\t\t\tconst registerAllSlots = () => [\n\t\t\t\t\tregisterSection(),\n\t\t\t\t\t...WORKBUDDY_CARD_KEYS.map((key) => registerCard(\"plugins.bundle.config\", key)),"
+    },
+    {
+      "tag": "card root li -> div",
+      "old": "jsxs)(\"li\", {\n\t\t\t\tclassName: `dsm-plugin-card${open ? \" dsm-plugin-card-open\" : \"\"}`,",
+      "new": "jsxs)(\"div\", {\n\t\t\t\tclassName: `dsm-plugin-card${open ? \" dsm-plugin-card-open\" : \"\"}`,"
+    }
+  ]
+}

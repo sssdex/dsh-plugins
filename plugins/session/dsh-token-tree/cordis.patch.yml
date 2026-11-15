@@ -1,0 +1,11 @@
+# dsh-token-tree 自带的 bundle 层。
+# 只要 profile 的 package.json 把 dsh-token-tree 列进 dsh.profile.bundles，
+# 这一层就会被自动挂载，无需手工改 profile 的 cordis.patch.yml。
+- insert:
+    - id: dsh-token-tree
+      name: dsh-token-tree
+      config:
+        # 会话目录列表缓存毫秒数。
+        scanCacheMs: 4000
+        # 最多扫描多少个会话目录。
+        maxSessions: 4000

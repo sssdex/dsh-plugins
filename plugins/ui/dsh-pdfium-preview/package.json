@@ -1,0 +1,45 @@
+{
+  "name": "dsh-pdfium-preview",
+  "version": "0.1.0",
+  "description": "PDFium(WASM) 侧边栏 PDF 阅读器：替换 pdf.js 预渲染链路，页面按需光栅化 + 真实文本层。",
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "client.viewer.js",
+    "client.pdfium.js",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.txt",
+    "scripts/"
+  ],
+  "dsh": {
+    "id": "dsh-pdfium-preview",
+    "name": "PDFium 快速 PDF 预览",
+    "version": "0.1.0",
+    "repo": "local/dsh-pdfium-preview",
+    "permissions": "客户端侧栏文档正文（读取宿主动画帧内 PDF 字节，不联网）",
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh": ">=0.2.0-rc.1 <0.3.0-0"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/dsh": {
+      "optional": true
+    }
+  }
+}

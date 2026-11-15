@@ -1,0 +1,44 @@
+{
+  "name": "dsh-token-tree",
+  "version": "0.1.0",
+  "private": true,
+  "description": "父代理 + 全部子孙代理的 token 汇总：右侧栏面板显示 billed 合计 / 真实新增成本 / 按代理拆开的明细树。",
+  "type": "module",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-conversation",
+        "@deepseek-ai/dsh-client-ui-sidebar-right",
+        "@deepseek-ai/dsh-client-locale"
+      ]
+    }
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "token",
+    "subagent"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT"
+}

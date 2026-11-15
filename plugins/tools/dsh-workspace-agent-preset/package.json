@@ -1,0 +1,52 @@
+{
+  "name": "dsh-workspace-agent-preset",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Per-workspace default agent preset and model: pick a preset, model and reasoning effort per workspace in Settings, and new sessions in that workspace start with them unless one is chosen explicitly. · 在设置页为每个工作区单独指定默认 Agent 预设、模型与推理等级。",
+  "type": "module",
+  "main": "./lib/index.js",
+  "icon": "./icon.svg",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json",
+    "./icon": "./icon.svg",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "cordis.patch.yml",
+    "icon.svg",
+    "locale/*.json",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node selftest.mjs && node client-probe.mjs"
+  },
+  "dsh": {
+    "manifestVersion": 1,
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-locale"
+      ]
+    }
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "agent-preset",
+    "workspace",
+    "model",
+    "reasoning-effort"
+  ],
+  "license": "MIT"
+}

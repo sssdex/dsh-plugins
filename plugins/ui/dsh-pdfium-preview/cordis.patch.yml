@@ -1,0 +1,7 @@
+# Bundle patch layer: this row loads the package main as the host half (an empty
+# Cordis plugin — the work is entirely client-side); the `dsh.client` declaration
+# makes the web app load ./client.js as the browser half, which registers a
+# documentPreviews implementation for .pdf and its keyed body component.
+- insert:
+    - id: dsh-pdfium-preview
+      name: dsh-pdfium-preview

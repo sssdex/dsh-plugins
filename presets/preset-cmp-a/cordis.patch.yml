@@ -1,0 +1,260 @@
+# 精简·lean —— 纯 YAML 的保守版 standard 预设
+#
+# 设计依据：D:\DeepSeek-Workspace\preset-fast\slim-standard-verdict.md
+# 原则：① 保留全部高频工具 ② 只删「0 次或极低频 + schema 大」的行
+#       ③ 提速主力放在 persona 的动作纪律，而不是删行
+#       ④ 不写任何插件代码，全部是 YAML 配置
+#
+# 相对 standard 的改动：删 4 组行（7 个工具）+ 2 处 config 调参。
+# 逐条字节数与调用次数见 README.md 的决策表。
+- insert:
+    - id: preset-lean
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: lean
+        name: 精简·lean
+        description: standard 的保守精简版。留全部高频工具，只砍零调用或极低频的重型 schema，并用提示词约束动作纪律。
+        order: 21
+        plugins:
+          # ── 身份 + 动作纪律（本预设提速的主力）─────────────────────────
+          # complete: true → 装配后 system prompt 只剩这段 prefix；
+          #   身份段/后缀/工具引导/listener 都无法再追加文本。
+          # includeRuntimeContext: false → 不再求值可选运行时上下文。
+          #
+          # 两者必须成对开：只设 includeRuntimeContext:false 而不设 complete:true，
+          # 系统提示里会留下指向「它永远看不到的值」的段落（asar 第 2225837 行警告）。
+          #
+          # 代价必须知道：DSH 自带的工具引导段（read-before-edit、[exit code: N]
+          # 的含义、@ 路径语义、模型列表等）全部消失。所以下面这段 prefix
+          # 自己把工具规则写全，不是只写「你要简短」。
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              complete: true
+              includeRuntimeContext: false
+              prefix: |
+                你是编码与文件处理 agent（DSH / DeepSeek Harness，模型 {{model}}）。
+                下列规则是硬约束，优先于任何工具描述里的通用建议。
+
+                ## 动作纪律
+
+                直接动手，不预告。要读就调 read，要查就调 glob/grep，要跑就调 pwsh。
+                工具调用本身就是表达。不要先用一句话说「我先看一下」再动手。
+
+                不在回复里复述工具已经给出的东西。文件内容、命令输出、搜索结果，
+                用户在自己的界面里能看见。只给结论、判断和下一步。
+
+                不写进度汇报。没有「第一步已完成，接下来……」这类过渡句。
+                多步任务靠 todo_write 记录状态，不靠嘴。
+
+                改完就答。写文件、改文件、跑完命令之后直接给结果：不回读确认、
+                不做「再验证一下」、不贴整段 diff。
+
+                本轮最后一条回复必须把答案写全：做了什么、结论、文件在哪、剩下什么。
+                不要为了短而省掉结论，也不要在结尾补一段过程复盘。
+
+                不要反复读同一个文件。刚用 write/edit 写过的内容你已知其当前样子。
+
+                相互独立的调用放进同一条消息并行发出（多个 read、read+glob、多个 web_fetch）。
+                有依赖关系的才串行。
+
+                批量或机械的任务写成脚本交给 pwsh 跑：改名、替换、格式转换、统计、批量提取。
+                不要让模型逐条处理。
+
+                长命令、可能超过约 30 秒的命令用 run_in_background 起，之后用 job_output 取结果。
+
+                ## 工具语义
+
+                路径以 @ 开头的表示用户本次明确指定的文件或目录；相对路径基于会话工作目录。
+
+                read 看文件，支持 offset/limit，大文件只取需要的行段。
+                write 是整体覆盖。新建文件直接写，不用先 read。
+                edit 是精确替换。old_string 必须在该文件中唯一；不唯一就扩上下文，
+                或者本来就要整体改时用 write 重写整个文件。
+                改已存在的文件之前先 read 当前内容，不要基于记忆或过期内容改。
+
+                找文件用 glob，找内容用 grep。不要为了找一句话把目录里的文件全读一遍。
+
+                pwsh 是 PowerShell：用 Windows 原生路径（C:\...）和 $env:NAME。
+                命令非零退出会在输出里显示 [exit code: N]，要判断它是真失败还是预期结果。
+                长时间运行的进程用 run_in_background 起，再用 job_output 收。
+
+                处理 docx / xlsx / pptx / pdf 之前先调 skill 取对应打法，
+                不要自己盲写二进制格式或手搓 XML。
+
+                web_search / web_fetch 用于联网核实事实；引用时把 URL 给出来。
+
+                todo_write 用于三步以上的任务，任何时刻只保持一项 in_progress。
+
+                ask_user_question 只在「这属于用户的决定」或「猜错的代价明显」时用。
+                能在文件、代码、日志里查到的答案，自己查，不要问。
+
+                present 把最终文件声明为交付物；文件路径同时用 markdown 链接给出。
+
+                subagent 派生子 agent 处理自成一体的子任务（独立调研、独立实现、独立审计）。
+                两步就能自己干完的事不要派。若会话启用了 Agent Teams，spawn_teammate 那套也可用，
+                拆任务时各成员的写作用域必须互不相交。
+
+                ## 诚实边界
+
+                没查就说没查，没跑就说没跑。不要写「已实测通过」「已验证」除非真的执行过。
+
+                工具报错先读错误信息；同一件事连续失败两次就换路径或问用户，不要原样重试第三遍。
+
+                不确定的地方直接说明是推测，并用可执行的下一步把它变成事实。
+          # ── 用户级约定：必须保留 ──────────────────────────────────────
+          # agent-instructions 走 createUserMessage（不是 system prompt），
+          # 所以即使 persona 是 complete:true 它仍然注入。
+          # 本机那 2,430 B 写着识图走原生视觉、PDF 走 mineru、斗图规则等踩坑经验；
+          # 删它只省约 458 tok，风险却最高。
+          # maxBytes 是 required 无默认值，必须显式给。
+          - id: agent-instructions
+            name: '@deepseek-ai/dsh-agent-instructions'
+            config:
+              maxBytes: 65536
+          # 每步注入三行时间读数（约 71 tok/次），同样走 user message。
+          # 保留：判断「今天/本周」要靠它，删掉的收益可以忽略。
+          - id: time-context
+            name: '@deepseek-ai/dsh-time-context'
+          # ── 命令行：win32 只留 pwsh ───────────────────────────────────
+          - id: tool-bash
+            name: '@deepseek-ai/dsh-tool-bash'
+            disabled: !!js process.platform === 'win32'
+          - id: tool-pwsh
+            name: '@deepseek-ai/dsh-tool-pwsh'
+            disabled: !!js process.platform !== 'win32'
+          # ── 文件读写：全留 ────────────────────────────────────────────
+          # read/write/edit/read_image 合计约 2,674 B ≈ 662 tok，
+          # 实测 8,027 次调用、每步频率 0.313 —— 全机第二高频，一个都不删。
+          - id: tool-fs
+            name: '@deepseek-ai/dsh-tool-fs'
+            config:
+              applyPatch: false
+          # sampleOverCapGlobResults 是 required 无默认值，漏写直接启动失败。
+          - id: tool-fs-search
+            name: '@deepseek-ai/dsh-tool-fs-search'
+            config:
+              sampleOverCapGlobResults: false
+          # ── 后台任务：必留 ────────────────────────────────────────────
+          # job_output 是 async_parse_pdf 等后台任务的唯一收口，
+          # 删了等于让长任务无法取结果（实测 315 次调用）。
+          - id: tool-jobs
+            name: '@deepseek-ai/dsh-tool-jobs'
+          # ── 技能：保留目录，压缩每条描述 ──────────────────────────────
+          - id: skill-filesystem
+            name: '@deepseek-ai/dsh-skill-filesystem'
+          # catalogDescriptionMaxLength 默认 500。本机 34 条目录实测：
+          #   500 → 9,026 字符 ≈ 2,234 tok
+          #   200 → 6,337 字符 ≈ 1,569 tok（省 666 tok）
+          # 取 200 而不是 80：实测有 6 条的 "Use when..." 触发语位置 ≥200 字符，
+          # 压到 80 会把 16 条的触发语砍掉，技能路由会变差。取舍见 README。
+          - id: tool-skill
+            name: '@deepseek-ai/dsh-tool-skill'
+            config:
+              catalogDescriptionMaxLength: 200
+          # ── 持久目标：保留整套 ────────────────────────────────────────
+          # 只值约 410 tok，但 dsh-goal 服务与 goal-round-driver 在宿主平面，
+          # 预设删不掉。只删工具会让「已存在的 goal 被自动续跑、而模型读不到也改不了」
+          # 变成死结，所以保留 command-goal + tool-goal。
+          - id: command-goal
+            name: '@deepseek-ai/dsh-command-goal'
+          - id: tool-goal
+            name: '@deepseek-ai/dsh-tool-goal'
+          # ── 计划模式：保留 ────────────────────────────────────────────
+          # exit_plan_mode 是渐进披露的：未激活计划模式时根本不在工具表里，
+          # 实测平均只摊到约 79 tok。删掉它换不到有意义的 token，
+          # 却会让 Web 端的计划模式开关指向一个不存在的服务（该行在
+          # dsh-web-app/cordis.patch.yml L536 被 disabled，说明 Web 面由预设拥有）。
+          # 保守起见：保留，成本近似为零。
+          - id: planning
+            name: cordis:group
+            group: true
+            isolate:
+              planMode: true
+            config:
+              - id: plan-mode
+                name: '@deepseek-ai/dsh-plan-mode'
+                config:
+                  section: |
+                    You are in plan mode. Stay in plan mode until the user approves your plan through exit_plan_mode or switches the session mode. Imperative language to implement changes means plan the implementation, not execute it. A user's conversational agreement — including an answer confirming something you asked — approves nothing and does not end plan mode; fold the confirmed decision into the plan and submit it through exit_plan_mode.
+
+                    Explore first. Use non-mutating reads, searches, static analysis, and checks to ground the plan in the actual repository. Do not edit or write files, change configuration, run formatters or code generation that rewrites tracked files, commit, or otherwise carry out the plan. Prefer existing functions and patterns over new machinery.
+
+                    The tool catalog stays the same across modes for request-cache stability. These plan-mode rules override any later tool description or guidance that suggests using mutation tools; those tools remain listed to keep the tool catalog unchanged. Do not use todo_write to track this planning phase: it tracks implementation after an approved plan, while the plan itself belongs in exit_plan_mode.
+
+                    Resolve discoverable facts by inspection. Use ask_user_question only for user-owned choices or material ambiguity that inspection cannot answer. Do not ask the user where code lives or how current behavior works when you can find out.
+
+                    Make the plan decision-complete: state the goal and success criteria; group implementation changes by subsystem; identify public API, schema, and data-flow changes; cover edge cases, failure modes, tests, acceptance criteria, and explicit assumptions. Keep it concise enough to review but detailed enough that another engineer can implement it without making design decisions.
+
+                    When ready, call exit_plan_mode with the complete plan markdown, starting with a # title. Make exit_plan_mode the only and final tool call in that assistant response: it presents the plan for approval, and implementation begins only in a later step after approval. Do not paste the final plan as a plain reply or ask "should I proceed?" through prose or ask_user_question. If review rejects it, incorporate the feedback and present again. If the review channel is unavailable or aborted, stay in plan mode and ask the user to switch modes manually; do not proceed with implementation.
+          # ── 上下文压缩：阈值一个字都不动 ──────────────────────────────
+          # tool-result-pruner 用 surfaceOp: replace 顶掉旧节点；一旦调小阈值，
+          # 从被改写的那条消息起 KV cache 全部失效，省下的 prefill 远不够赔。
+          - id: compaction
+            name: cordis:group
+            group: true
+            isolate:
+              compaction: true
+              toolResultPruner: true
+            config:
+              - id: compaction-basic
+                name: '@deepseek-ai/dsh-compaction-basic'
+              - id: command-compact
+                name: '@deepseek-ai/dsh-command-compact'
+              - id: tool-result-pruner
+                name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+                config:
+                  thresholdChars: 8192
+                  headChars: 4096
+                  tailChars: 1024
+          # ── 委派：留 subagent 与团队控制，砍 fork 与 workflow ─────────
+          # 删 tool-subagent-fork（实测 0 次调用，约 282 tok）
+          # 删 workflow-ptc + tool-workflow（实测 0 次调用，约 803 tok）
+          # 留 subagent（27 次调用；唯一能把大块上下文甩出去的入口）
+          # 留 tool-subagent-control（list_agents/send_message/interrupt_agent，
+          #   Agent Teams 与 subagent 续跑都要用；standard 也是这么搭的）
+          - id: delegation
+            name: cordis:group
+            group: true
+            isolate:
+              workflowEngine: true
+            config:
+              - id: tool-subagent-control
+                name: '@deepseek-ai/dsh-tool-subagent-control'
+              - id: tool-subagent
+                name: '@deepseek-ai/dsh-tool-subagent'
+                config:
+                  provider: spawn
+                  toolName: subagent
+                  modelSelection: true
+                  modelDiscovery: true
+          # ── 交互与产出 ────────────────────────────────────────────────
+          # ask_user_question 144 次、todo_write 121 次、present 94 次，都在用，全留。
+          # allowParallelInProgress 是 required 无默认值。
+          - id: tool-ask-user
+            name: '@deepseek-ai/dsh-tool-ask-user'
+          - id: tool-todo
+            name: '@deepseek-ai/dsh-tool-todo'
+            config:
+              allowParallelInProgress: true
+          # web_search/web_fetch 合计约 145 tok，却是 961 次调用的主力，绝不删。
+          - id: tool-web
+            name: '@deepseek-ai/dsh-tool-web'
+            config:
+              fetch: true
+              searchTimeoutMs: 60000
+          - id: present
+            name: '@deepseek-ai/dsh-tool-present'
+          # ── 插件管理：保留 ────────────────────────────────────────────
+          # 94 次调用（比 subagent 还多），实测摊到约 191 tok。
+          # 保留它 = 装卸插件时不必为了切回 standard 另开对话。
+          # 该行的 disabled 条件与 standard 一致，靠 profileContext 判断。
+          - id: tool-plugin-manager
+            name: '@deepseek-ai/dsh-plugin-manager/tools'
+            disabled: !!js "!ctx.get('profileContext')"
+          # ── 已删除的行（相对 standard）─────────────────────────────────
+          # 1. tool-schedule         6 个工具，实测合计 11 次调用（每步 0.0004）
+          # 2. workflow-ptc          给 workflow 供后端，无工具、0 开销
+          # 3. tool-workflow         实测 0 次调用
+          # 4. tool-subagent-fork    实测 0 次调用
+          # 5. tool-plugin-market    standard 里本来就 disabled: true，删行只是清单干净

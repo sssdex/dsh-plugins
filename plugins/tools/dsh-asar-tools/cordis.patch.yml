@@ -1,0 +1,6 @@
+# dsh-asar-tools 自带的 bundle 层。
+# 只要 profile 的 package.json 把 dsh-asar-tools 列进 dsh.profile.bundles，
+# 这一层就会被自动挂载，无需手工改 profile 的 cordis.patch.yml。
+- insert:
+    - id: dsh-asar-tools
+      name: dsh-asar-tools

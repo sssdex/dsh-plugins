@@ -1,0 +1,1360 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1500, initial-scale=1">
+<title>酒馆回话排版 · 预览（深色）</title>
+<style>
+/* ── 预览页自身的骨架样式（插件样式在下面那个 <style id="dsh-tavern-render/styles"> 里） ── */
+* { box-sizing: border-box; }
+html { background: #0a0e13; }
+body {
+  margin: 0 auto;
+  padding: 26px 30px 56px;
+  width: 1500px;
+  max-width: 1500px;
+  background: #0a0e13;
+  color: #cfd8e4;
+  font-family: system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  /* 模拟宿主主题变量：styles.js 里 --tt-narration 等读的是这几个 */
+  --dsw-alias-label-primary:#e6ebf2;
+  --dsw-alias-label-secondary:#b6c0cd;
+  --dsw-alias-label-tertiary:#8b95a5;
+  --dsw-alias-border-l1:rgba(255,255,255,0.13);
+  --dsw-alias-bg-layer-2:rgba(255,255,255,0.03);
+  --dsw-alias-markdown-code-block:rgba(255,255,255,0.05);
+}
+
+/* 页头 */
+.pv-head { border-bottom: 1px solid rgba(255,255,255,0.13); padding-bottom: 14px; margin-bottom: 20px; }
+.pv-head h1 { margin: 0 0 8px; font-size: 21px; font-weight: 700; color: #e9eff7; letter-spacing: .01em; }
+.pv-head h1 .pv-theme { color: #7fd3c4; }
+.pv-sub { margin: 3px 0 0; font-size: 12.5px; line-height: 1.7; color: #8b95a5; }
+.pv-sub code, .pv-parse code, .pv-card-meta code, .pv-notice code {
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 11.5px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.13);
+  border-radius: 5px;
+  padding: 0 5px;
+  color: #cfd8e4;
+}
+
+/* 总览 */
+.pv-overview { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 16px 0 24px; }
+.pv-card {
+  display: flex; align-items: flex-start; gap: 10px;
+  border: 1px solid rgba(255,255,255,0.13); border-radius: 11px;
+  background: #121820; padding: 10px 12px;
+}
+.pv-card-id {
+  flex: none; width: 22px; height: 22px; border-radius: 50%;
+  display: grid; place-items: center;
+  font: 700 11.5px ui-monospace, Consolas, monospace;
+  color: #7fd3c4; border: 1px solid #7fd3c4;
+}
+.pv-card-body { min-width: 0; flex: 1; }
+.pv-card-title { font-size: 13px; font-weight: 600; color: #e9eff7; margin-bottom: 5px; }
+.pv-card-meta { font-size: 11.5px; line-height: 1.65; color: #8b95a5; }
+.pv-card-flag { flex: none; font-weight: 700; font-size: 13px; }
+.pv-flag-ok { color: #7fd3c4; }
+.pv-flag-warn { color: #e5b567; }
+
+/* 每个样例 */
+.pv-case { margin-bottom: 30px; }
+.pv-case-head { display: flex; align-items: flex-start; gap: 11px; }
+.pv-case-id {
+  flex: none; width: 24px; height: 24px; border-radius: 7px;
+  display: grid; place-items: center; margin-top: 1px;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.13);
+  font: 700 12px ui-monospace, Consolas, monospace; color: #7fd3c4;
+}
+.pv-case-head > div { flex: 1; min-width: 0; }
+.pv-case h2 { margin: 0 0 5px; font-size: 15px; font-weight: 700; color: #e9eff7; }
+.pv-tag {
+  font-size: 10.5px; font-weight: 500; letter-spacing: .04em;
+  color: #8b95a5; border: 1px dashed rgba(255,255,255,0.13);
+  border-radius: 999px; padding: 1px 7px; margin-left: 6px;
+  white-space: nowrap;
+}
+.pv-desc { margin: 0; font-size: 12px; line-height: 1.7; color: #8b95a5; }
+.pv-badge {
+  flex: none; font: 600 10.5px ui-monospace, Consolas, monospace;
+  border-radius: 999px; padding: 2px 9px; letter-spacing: .03em;
+  white-space: nowrap;
+}
+.pv-badge-ok { color: #7fd3c4; background: rgba(127,211,196,0.12); border: 1px solid #7fd3c4; }
+.pv-badge-warn { color: #e5b567; background: rgba(229,181,103,0.12); border: 1px solid #e5b567; }
+.pv-parse { margin: 9px 0 11px; font-size: 11.5px; line-height: 1.7; color: #8b95a5; }
+
+/* 双栏 */
+.pv-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.pv-pane { min-width: 0; }
+.pv-pane-wide { width: 100%; }
+
+/* d 组：每段坏输入一组，段之间用分隔线隔开 */
+.pv-sub {
+  border-top: 1px dashed rgba(255,255,255,0.13);
+  padding-top: 14px;
+  margin-top: 16px;
+}
+.pv-sub:first-child { border-top: 0; padding-top: 0; margin-top: 4px; }
+.pv-sub-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 9px; }
+.pv-sub-id {
+  font: 700 11px ui-monospace, Consolas, monospace;
+  color: #7fd3c4;
+  border: 1px solid rgba(255,255,255,0.13);
+  border-radius: 5px;
+  padding: 0 5px;
+}
+.pv-sub-label { font-size: 13px; font-weight: 600; color: #e9eff7; }
+.pv-sub-note { margin: 5px 0 0; font-size: 11.5px; line-height: 1.7; color: #8b95a5; }
+.pv-pane-title {
+  margin: 0 0 9px; font-size: 11px; font-weight: 700;
+  letter-spacing: .16em; text-transform: uppercase; color: #8b95a5;
+  display: flex; align-items: center; gap: 8px;
+}
+.pv-raw {
+  margin: 0; padding: 16px 18px;
+  background: #0c1116; border: 1px solid rgba(255,255,255,0.13); border-radius: 12px;
+  color: #9fb0c2;
+  font: 12.5px/1.85 ui-monospace, "Cascadia Code", Consolas, monospace;
+  white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere;
+}
+.pv-raw-plain { color: #cfd8e4; }
+.pv-stage {
+  padding: 18px 20px;
+  background: #101720; border: 1px solid rgba(255,255,255,0.13); border-radius: 12px;
+  min-height: 60px;
+}
+.pv-stage-wrong { border-style: dashed; opacity: .8; margin-top: 8px; }
+.pv-notice {
+  margin: 0 0 10px; padding: 9px 12px;
+  font-size: 12px; line-height: 1.75;
+  color: #cfd8e4;
+  background: rgba(229,181,103,0.12);
+  border: 1px solid #e5b567;
+  border-left-width: 3px;
+  border-radius: 8px;
+}
+/* 「内容零丢失」这类正向结论用绿色，别和警告混在一起 */
+.pv-notice-ok {
+  background: rgba(127,211,196,0.12);
+  border-color: #7fd3c4;
+}
+/* 已知局限：中性提示，用蓝色区别于「有问题」的橙色 */
+.pv-notice-info {
+  background: rgba(255,255,255,0.03);
+  border-color: #7fd3c4;
+  color: #8b95a5;
+  font-size: 11.5px;
+}
+.pv-details { margin-top: 10px; font-size: 11.5px; color: #8b95a5; }
+.pv-details summary { cursor: default; }
+
+/* 自检清单 */
+.pv-checks { border: 1px solid rgba(255,255,255,0.13); border-radius: 12px; background: #121820; padding: 16px 18px; }
+.pv-checks h2 { margin: 0 0 10px; font-size: 14px; color: #e9eff7; }
+.pv-checks ul { margin: 0; padding: 0; list-style: none; }
+.pv-checks li { font: 12px/1.9 ui-monospace, Consolas, monospace; }
+.pv-ok { color: #7fd3c4; }
+.pv-bad { color: #e5b567; }
+
+/* 页脚 */
+.pv-foot { margin-top: 22px; font-size: 11.5px; line-height: 1.8; color: #8b95a5; }
+</style>
+<style id="dsh-tavern-render/styles">
+/* ── 插件样式：直接来自 lib/styles.js 的 buildCSS()，一字未改 ── */
+
+/* ═══════════════ 主题变量 ═══════════════ */
+body:where([data-dsh-tavern-render]) {
+  /* 全部正文共用宿主自己的正文字体。
+   * 之前给对白单独配了 Georgia / Songti SC / Noto Serif CJK 的衬线栈，
+   * 但 Windows 上那几个中文字体根本不存在，回退到系统宋体，小字号下发虚发丑。
+   * 现在统一用 --dsh-font-family（宿主已经在 body 上设好），中文英文都跟界面一致。 */
+  --tt-font-prose: var(--dsh-font-family, var(--dsw-font-family, inherit));
+
+  /* 对白：楷体。本机实测存在（楷体 / KaiTi / STKaiti 三档兜底，
+   * 前两个 Windows 自带，第三个是 macOS 名字，都取不到才退到 serif）。
+   * 字号与旁白完全相同 —— 只换字体和颜色，不放大。 */
+  --tt-font-dialog: "楷体", "KaiTi", "STKaiti", var(--dsh-font-family, serif);
+
+  --tt-font-mono: var(--ds-font-family-code, ui-monospace, "Cascadia Code", Consolas, monospace);
+
+  /* 对白不再放大 —— 字号和行高都与正文一致。 */
+  --tt-prose-size: 15px;
+  --tt-prose-line: 1.95;
+  --tt-meta-size: 12px;
+  --tt-title-size: 11.5px;
+
+  --tt-narration: var(--dsw-alias-label-primary, #d8dee9);
+  --tt-narration-soft: var(--dsw-alias-label-secondary, #aeb8c6);
+
+  /* 对白：暖琥珀。不刺眼、夜间友好，和正文灰白有区分但不打架。 */
+  --tt-dialog: #e0b878;
+  --tt-dialog-bg: transparent;
+  --tt-dialog-border: rgba(224, 184, 120, 0.42);
+
+  /* 动作/神态：只降成次要色 + 斜体，不铺底色块（主人指定）。 */
+  --tt-action: var(--dsw-alias-label-secondary, #aeb8c6);
+  --tt-action-soft: transparent;
+
+  --tt-surface: var(--dsw-alias-markdown-code-block, rgba(255, 255, 255, 0.045));
+  --tt-surface-2: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03));
+  --tt-border: var(--dsw-alias-border-l1, rgba(255, 255, 255, 0.12));
+  --tt-radius: 12px;
+
+  --tt-accent: #7fb2e8;
+  --tt-warm: #e5b567;
+  --tt-pink: #e88fa8;
+  --tt-blue: #7fb2e8;
+  --tt-violet: #b39ddb;
+  --tt-green: #8fd694;
+  --tt-dim: var(--dsw-alias-label-tertiary, #8b95a5);
+}
+
+/* 亮色主题（宿主没有 dark 标记时） */
+body:where([data-dsh-tavern-render]):not([data-ds-dark-theme]) {
+  /* 浅底上琥珀色会糊，换成同色系的深琥珀/赭石，观感一致且够对比度。 */
+  --tt-dialog: #a9762a;
+  --tt-dialog-bg: transparent;
+  --tt-dialog-border: rgba(169, 118, 42, 0.38);
+  --tt-action: var(--dsw-alias-label-secondary, rgba(15, 30, 60, 0.62));
+  --tt-action-soft: transparent;
+  --tt-surface: rgba(15, 30, 60, 0.035);
+  --tt-surface-2: rgba(15, 30, 60, 0.02);
+  --tt-border: rgba(15, 30, 60, 0.12);
+  --tt-accent: #2a6db5;
+  --tt-warm: #b47d1e;
+  --tt-pink: #c04a67;
+  --tt-blue: #2a6db5;
+  --tt-violet: #6a4fa8;
+  --tt-green: #2e7d32;
+  --tt-dim: rgba(15, 30, 60, 0.52);
+}
+
+/* ═══════════════ 根容器 ═══════════════ */
+.tt-root {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font-family: var(--tt-font-prose);
+  color: var(--tt-narration);
+}
+
+/* ═══════════════ 正文：旁白 / 对白 / 动作 ═══════════════ */
+.tt-prose {
+  font-size: var(--tt-prose-size);
+  line-height: var(--tt-prose-line);
+  letter-spacing: 0.012em;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.tt-narration {
+  color: var(--tt-narration);
+}
+
+/* 对白：换楷体 + 暖琥珀色，字号与旁白完全一致（不放大）。
+ * 左侧竖线保留，作为「这段是说的」的第二个提示；不铺底色块。 */
+.tt-speech {
+  color: var(--tt-dialog);
+  font-family: var(--tt-font-dialog);
+  font-size: inherit;
+  line-height: inherit;
+  background: var(--tt-dialog-bg);
+  border-left: 2px solid var(--tt-dialog-border);
+  border-radius: 0 2px 2px 0;
+  padding: 0 4px 0 7px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.tt-speech-inner { font-style: normal; }
+
+/* 动作 / 神态：淡色斜体，不铺底色（主人指定「不要色块」）。 */
+.tt-action {
+  color: var(--tt-action);
+  font-style: italic;
+  font-size: inherit;
+  background: var(--tt-action-soft);
+  padding: 0 1px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* ═══════════════ 分区通用标题 ═══════════════ */
+.tt-section-title {
+  font-size: var(--tt-title-size);
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--tt-dim);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tt-section-title::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--tt-border), transparent);
+}
+
+/* ═══════════════ 元信息 ═══════════════ */
+.tt-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--tt-meta-size);
+  font-family: var(--tt-font-mono);
+  color: var(--tt-dim);
+  border: 1px dashed var(--tt-border);
+  border-radius: 999px;
+  padding: 3px 12px;
+  align-self: flex-start;
+}
+.tt-meta-label {
+  color: var(--tt-accent);
+  opacity: 0.85;
+  letter-spacing: 0.08em;
+}
+
+/* ═══════════════ 状态栏：可视化卡片 ═══════════════ */
+.tt-status {
+  border: 1px solid var(--tt-border);
+  border-radius: var(--tt-radius);
+  background: var(--tt-surface);
+  padding: 12px 14px 14px;
+}
+
+.tt-status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px;
+  align-items: start;
+}
+
+.tt-char {
+  border: 1px solid var(--tt-border);
+  border-radius: 10px;
+  background: var(--tt-surface-2);
+  padding: 10px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tt-char-name {
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--tt-warm);
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--tt-border);
+}
+
+.tt-char-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.tt-field { display: inline-flex; }
+
+/* 数值字段：环 + 数字 */
+.tt-field-num { align-items: center; }
+
+.tt-gauge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--tt-font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--tt-accent);
+}
+.tt-gauge-ring {
+  --p: calc(var(--tt-gauge) * 1%);
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background:
+    conic-gradient(var(--tt-accent) var(--p), var(--tt-border) 0);
+  mask: radial-gradient(farthest-side, transparent calc(100% - 3.5px), #000 calc(100% - 3.5px));
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3.5px), #000 calc(100% - 3.5px));
+  flex: none;
+}
+.tt-gauge-text { color: var(--tt-narration); }
+.tt-gauge-label {
+  font-family: var(--tt-font-prose);
+  font-size: 10.5px;
+  font-weight: 400;
+  color: var(--tt-dim);
+  letter-spacing: 0.05em;
+}
+
+.tt-num {
+  font-family: var(--tt-font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--tt-warm);
+  background: var(--tt-surface);
+  border: 1px solid var(--tt-border);
+  border-radius: 999px;
+  padding: 1px 9px;
+}
+
+/* 长描述字段：独占一行 */
+.tt-field-text {
+  flex: 1 1 100%;
+  font-size: 12.5px;
+  line-height: 1.62;
+  color: var(--tt-narration);
+  opacity: 0.88;
+  background: var(--tt-surface);
+  border-left: 2px solid var(--tt-border);
+  border-radius: 0 6px 6px 0;
+  padding: 4px 9px;
+}
+
+/* 短标签：名字 + 值 */
+.tt-field-tag {
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--tt-blue);
+  background: var(--tt-surface);
+  border: 1px solid var(--tt-border);
+  border-radius: 6px;
+  padding: 2px 8px;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.tt-tag-label {
+  font-size: 10px;
+  color: var(--tt-dim);
+  letter-spacing: 0.06em;
+}
+.tt-tag-value { color: var(--tt-blue); font-weight: 500; }
+
+/* 数值标签（非 0-100 的数值） */
+.tt-num-label {
+  font-size: 10px;
+  color: var(--tt-dim);
+  margin-left: 4px;
+  letter-spacing: 0.05em;
+}
+
+/* 长描述：带字段名 */
+.tt-text-label {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--tt-warm);
+  margin-right: 7px;
+  vertical-align: 1px;
+  white-space: nowrap;
+}
+
+/* 心声：斜体引用块，与属性区分 */
+.tt-char-inner {
+  font-size: 12.5px;
+  line-height: 1.68;
+  font-style: italic;
+  color: var(--tt-narration);
+  opacity: 0.82;
+  background: var(--tt-surface);
+  border-left: 2px solid var(--tt-violet);
+  border-radius: 0 6px 6px 0;
+  padding: 5px 10px;
+  margin-top: 2px;
+}
+
+/* 媒体文件名：等宽、弱化、小图钉 */
+.tt-field-media {
+  font-family: var(--tt-font-mono);
+  font-size: 10.5px;
+  color: var(--tt-dim);
+  border: 1px dashed var(--tt-border);
+  border-radius: 5px;
+  padding: 1px 6px;
+  opacity: 0.85;
+}
+
+/* ═══════════════ 社交动态 ═══════════════ */
+.tt-social {
+  border: 1px solid var(--tt-border);
+  border-radius: var(--tt-radius);
+  background: var(--tt-surface);
+  padding: 12px 14px 14px;
+}
+.tt-post {
+  border-left: 2px solid var(--tt-pink);
+  border-radius: 0 8px 8px 0;
+  background: var(--tt-surface-2);
+  padding: 9px 12px;
+  margin-top: 8px;
+}
+.tt-post-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.tt-post-name {
+  font-weight: 700;
+  font-size: 13.5px;
+  color: var(--tt-pink);
+}
+.tt-post-handle {
+  font-family: var(--tt-font-mono);
+  font-size: 11px;
+  color: var(--tt-dim);
+}
+.tt-social-stats {
+  font-family: var(--tt-font-mono);
+  font-size: 10.5px;
+  color: var(--tt-warm);
+  margin-left: auto;
+  border: 1px solid var(--tt-border);
+  border-radius: 999px;
+  padding: 0 8px;
+}
+.tt-post-text {
+  font-size: 13.5px;
+  line-height: 1.78;
+  margin: 0;
+  color: var(--tt-narration);
+}
+.tt-social-append {
+  margin-top: 7px;
+  font-size: 12px;
+  line-height: 1.65;
+  color: var(--tt-narration-soft);
+  border-left: 2px dashed var(--tt-border);
+  padding-left: 9px;
+}
+.tt-social-extra {
+  display: flex;
+  gap: 7px;
+  margin-top: 7px;
+  flex-wrap: wrap;
+}
+.tt-social-extra > span {
+  font-family: var(--tt-font-mono);
+  font-size: 10.5px;
+  color: var(--tt-dim);
+  border: 1px solid var(--tt-border);
+  border-radius: 999px;
+  padding: 0 8px;
+}
+
+/* ═══════════════ 聊天消息 ═══════════════ */
+.tt-chat {
+  border: 1px solid var(--tt-border);
+  border-radius: var(--tt-radius);
+  background: var(--tt-surface);
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.tt-chat-time {
+  font-family: var(--tt-font-mono);
+  font-size: 10.5px;
+  color: var(--tt-dim);
+}
+.tt-bubble {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  background: var(--tt-surface-2);
+  border: 1px solid var(--tt-border);
+  border-radius: 4px 12px 12px 12px;
+  padding: 6px 11px;
+}
+.tt-bubble-from {
+  flex: none;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--tt-blue);
+  letter-spacing: 0.05em;
+}
+.tt-bubble-text {
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--tt-narration);
+  overflow-wrap: anywhere;
+}
+
+/* ═══════════════ 推荐 / 列表 ═══════════════ */
+.tt-feed {
+  border: 1px solid var(--tt-border);
+  border-radius: var(--tt-radius);
+  background: var(--tt-surface);
+  padding: 12px 14px 14px;
+}
+.tt-feed-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.tt-feed-list > li {
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--tt-narration-soft);
+  padding-left: 14px;
+  position: relative;
+}
+.tt-feed-list > li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 0.72em;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--tt-warm);
+  opacity: 0.7;
+}
+.tt-feed[data-variant="bilibili"] .tt-feed-list > li::before { background: var(--tt-pink); }
+
+/* ═══════════════ 选项：可点击的卡片 ═══════════════ */
+.tt-choices {
+  border: 1px solid var(--tt-border);
+  border-radius: var(--tt-radius);
+  background: linear-gradient(160deg, var(--tt-surface), transparent);
+  padding: 12px 14px 14px;
+}
+.tt-choices-hint {
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: var(--tt-dim);
+  opacity: 0.75;
+  text-transform: none;
+  margin-left: 4px;
+}
+.tt-choice-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  counter-reset: none;
+}
+.tt-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border: 1px solid var(--tt-border);
+  border-radius: 9px;
+  background: var(--tt-surface-2);
+  padding: 8px 12px;
+  transition: border-color 0.14s, background 0.14s, transform 0.14s, opacity 0.14s;
+  cursor: pointer;
+  user-select: none;
+}
+.tt-choice:hover {
+  border-color: var(--tt-accent);
+  background: var(--tt-dialog-bg);
+  transform: translateX(2px);
+}
+.tt-choice:focus-visible {
+  outline: 2px solid var(--tt-accent);
+  outline-offset: 1px;
+}
+/* 发送中：整组变暗并禁止再点 */
+.tt-choice-busy {
+  opacity: 0.45;
+  cursor: progress;
+}
+.tt-choice-sending {
+  border-color: var(--tt-warm);
+  opacity: 1;
+}
+/* 发送成功：勾一下，明确「已经替你发出去了」 */
+.tt-choice-sent {
+  border-color: var(--tt-warm);
+  opacity: 1;
+}
+.tt-choice-sent .tt-choice-index::after {
+  content: "✓";
+  position: absolute;
+  opacity: 0;
+}
+.tt-choice-sent .tt-choice-index {
+  color: var(--tt-warm);
+  border-color: var(--tt-warm);
+}
+/* 发送失败：短暂标红 */
+.tt-choice-failed {
+  border-color: #e0716f !important;
+  background: rgba(224, 113, 111, 0.10) !important;
+  opacity: 1 !important;
+}
+.tt-choice-index {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-family: var(--tt-font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--tt-accent);
+  border: 1px solid var(--tt-accent);
+  opacity: 0.9;
+  margin-top: 1px;
+}
+.tt-choice-text {
+  font-size: 13.5px;
+  line-height: 1.72;
+  color: var(--tt-narration);
+  overflow-wrap: anywhere;
+}
+
+/* ═══════════════ 平台内容块（peachhub） ═══════════════ */
+.tt-hub {
+  border: 1px solid var(--tt-border);
+  border-radius: var(--tt-radius);
+  background: var(--tt-surface);
+  padding: 12px 14px 14px;
+}
+.tt-hub-card {
+  border-left: 2px solid var(--tt-pink);
+  border-radius: 0 8px 8px 0;
+  background: var(--tt-surface-2);
+  padding: 10px 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.tt-hub-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--tt-pink);
+  letter-spacing: 0.02em;
+}
+.tt-hub-params {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.tt-hub-param {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  border: 1px solid var(--tt-border);
+  border-radius: 999px;
+  background: var(--tt-surface);
+  padding: 1px 9px;
+}
+.tt-hub-param-label {
+  font-size: 10px;
+  color: var(--tt-dim);
+  letter-spacing: 0.05em;
+}
+.tt-hub-param-value {
+  font-family: var(--tt-font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--tt-warm);
+}
+.tt-hub-desc {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.78;
+  color: var(--tt-narration);
+  white-space: pre-wrap;
+}
+.tt-hub-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.tt-hub-tag {
+  font-size: 11px;
+  color: var(--tt-blue);
+  background: var(--tt-surface);
+  border: 1px solid var(--tt-border);
+  border-radius: 6px;
+  padding: 1px 7px;
+}
+.tt-hub-comments {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-top: 1px dashed var(--tt-border);
+  padding-top: 7px;
+}
+.tt-hub-comment {
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--tt-narration-soft);
+}
+
+/* ═══════════════ 窄屏 ═══════════════ */
+@media (max-width: 560px) {
+  body:where([data-dsh-tavern-render]) {
+    --tt-prose-size: 14.5px;
+  }
+  .tt-status-grid { grid-template-columns: 1fr; }
+}
+
+/* 尊重「减少动态效果」 */
+@media (prefers-reduced-motion: reduce) {
+  .tt-choice { transition: none; }
+  .tt-choice:hover { transform: none; }
+}
+
+</style>
+</head>
+<body data-dsh-tavern-render="" data-ds-dark-theme>
+  <header class="pv-head">
+    <h1>酒馆回话排版 · 预览 — <span class="pv-theme">深色主题</span></h1>
+    <p class="pv-sub">
+      生成时间 2026/11/12 02:06:41 · 样例 4 段 · 用法
+      <code>node scripts/preview.mjs</code> → <code>preview.html</code>（深色）+ <code>preview-light.html</code>（浅色）
+    </p>
+    <p class="pv-sub">
+      静态快照：CSS 全内联、无外部请求、无 &lt;script&gt;，可直接
+      <code>chrome --headless --screenshot</code> 截。主题分支靠 body 属性切换：
+      body 带 <code>data-ds-dark-theme</code>（暗色分支）+ <code>data-dsh-tavern-render</code>
+    </p>
+  </header>
+
+  <div class="pv-overview">
+    <div class="pv-card">
+        <div class="pv-card-id">a</div>
+        <div class="pv-card-body">
+          <div class="pv-card-title">TRS v1 完整样例</div>
+          <div class="pv-card-meta"><code>kind=structured</code> <code>syntax=trs</code></div>
+          <div class="pv-card-meta">syntax=trs，命中 &lt;chars&gt; 分区，客户端接管</div>
+        </div>
+        <div class="pv-card-flag pv-flag-ok">✓</div>
+      </div>
+    <div class="pv-card">
+        <div class="pv-card-id">b</div>
+        <div class="pv-card-body">
+          <div class="pv-card-title">旧格式样例（兼容兜底）</div>
+          <div class="pv-card-meta"><code>kind=structured</code> <code>syntax=legacy</code></div>
+          <div class="pv-card-meta">syntax=legacy，命中 &lt;status&gt; 分区，客户端接管</div>
+        </div>
+        <div class="pv-card-flag pv-flag-ok">✓</div>
+      </div>
+    <div class="pv-card">
+        <div class="pv-card-id">c</div>
+        <div class="pv-card-body">
+          <div class="pv-card-title">普通回复样例（对照组）</div>
+          <div class="pv-card-meta"><code>kind=structured</code> <code>syntax=loose</code></div>
+          <div class="pv-card-meta">syntax=loose —— 客户端明确拒绝（只接管 trs / legacy），非门槛判定</div>
+        </div>
+        <div class="pv-card-flag pv-flag-ok">✓</div>
+      </div>
+    <div class="pv-card">
+        <div class="pv-card-id">d</div>
+        <div class="pv-card-body">
+          <div class="pv-card-title">畸形 / 容错组</div>
+          <div class="pv-card-meta"><code>kind=（三段见右）</code> <code>syntax=d1:trs d2:legacy d3:trs</code></div>
+          <div class="pv-card-meta">三段坏输入全部原样保留，零内容丢失</div>
+        </div>
+        <div class="pv-card-flag pv-flag-ok">✓</div>
+      </div>
+  </div>
+
+  <section class="pv-case" id="case-a">
+    <div class="pv-case-head">
+      <span class="pv-case-id">a</span>
+      <div>
+        <h2>TRS v1 完整样例 <span class="pv-tag">结构化 → 排版</span></h2>
+        <p class="pv-desc">旁白 / &quot;对白&quot; / *动作*；&lt;panel&gt; 里 info + status（2 个 char，带 affection/reason 数值、mood/outfit 短词与长句、心声正文）+ chat（2 条）+ feed（1 条带 note）+ list（3 条）+ choice（3 项）</p>
+      </div>
+      <span class="pv-badge pv-badge-ok">structured / trs</span>
+    </div>
+    <p class="pv-parse">summarize() → <code>prose(prose:11) · meta · chars(2人) · wechat(2条) · social(1条) · list(推荐:3) · choices(3项)</code></p>
+        <div class="pv-cols">
+      <div class="pv-pane">
+        <h3 class="pv-pane-title">原始 / 未排版</h3>
+        <pre class="pv-raw">&lt;scene&gt;
+&lt;prose&gt;
+晨光从露台的玻璃门斜切进来，在厨房的地砖上划出一道浅金色的边。你还没完全睁开眼，楼下已经热闹起来——油在锅里炸开的细响，碗碟轻轻碰撞，还有一个脚步在木地板上小跑。
+厨房里第一个抬眼的是清韵。她把煎蛋翻过来，听见脚步声就一直盯着锅，*耳朵先红了*。
+&quot;爸爸，早……啊❤&quot;她把铲子放下，转过身来，&quot;清韵做了早饭。那个……蛋有点焦，对不起。&quot;
+她说到一半忽然停住，*两只手在围裙上无意识地蹭了两下*。
+&quot;焦的才香哦！&quot;昕彤从吧台那边蹦起来，金色侧马尾一甩，赤着脚就扑到你身上。
+&lt;/prose&gt;
+&lt;panel&gt;
+&lt;info time=&quot;07:22 周六&quot; place=&quot;家中厨房&quot; weather=&quot;晴&quot;/&gt;
+&lt;status&gt;
+  &lt;char name=&quot;清韵&quot; affection=62 reason=18 mood=&quot;紧张又期待&quot; outfit=&quot;米色棉布长裙，外系浅棕色围裙，赤足踩着棉拖鞋&quot; body=&quot;指尖还沾着一点面粉&quot;&gt;
+    心声：爸爸在看这边……明明只是做早饭。
+  &lt;/char&gt;
+  &lt;char name=&quot;昕彤&quot; affection=75 reason=12 mood=&quot;黏人撒娇&quot; outfit=&quot;宽大白衬衫当裙子穿，只扣两颗扣子，赤脚&quot; body=&quot;刚睡醒，头发乱糟糟&quot;&gt;
+    心声：爸爸的手好暖哦❤可是要是不主动一点，爸爸肯定又先去看姐姐了。
+  &lt;/char&gt;
+&lt;/status&gt;
+&lt;chat time=&quot;07:20&quot;&gt;
+  &lt;msg from=&quot;昕彤&quot;&gt;爸爸起床了哦！快下来快下来！&lt;/msg&gt;
+  &lt;msg from=&quot;清韵&quot;&gt;……蛋要凉了呢&lt;/msg&gt;
+&lt;/chat&gt;
+&lt;feed source=&quot;推特&quot;&gt;
+  &lt;post name=&quot;养女日常&quot; handle=&quot;Petropavlovsk&quot; stats=&quot;43k&quot;&gt;
+    周六早上！爸爸还在睡，彤彤已经做完早饭了哦（其实是姐姐做的） #日常 #周六 #早餐
+    &lt;note&gt;图片：吧台上的煎蛋.jpg —— 盘子里摆着两颗略微焦边的煎蛋，旁边是两只小手比着V。&lt;/note&gt;
+  &lt;/post&gt;
+&lt;/feed&gt;
+&lt;list title=&quot;推荐&quot;&gt;
+  &lt;item&gt;周六限时：家用手冲咖啡套装，买一送一&lt;/item&gt;
+  &lt;item&gt;亚麻家居服新款上架，轻薄透气&lt;/item&gt;
+  &lt;item&gt;最新款人体工学椅，久坐不累，支撑完美&lt;/item&gt;
+&lt;/list&gt;
+&lt;choice&gt;
+  &lt;opt&gt;先喝清韵递来的牛奶，再坐下吃早饭&lt;/opt&gt;
+  &lt;opt&gt;把扑过来的昕彤抱上吧台&lt;/opt&gt;
+  &lt;opt&gt;让清韵把围裙解下来，看看她到底怎么了&lt;/opt&gt;
+&lt;/choice&gt;
+&lt;/panel&gt;
+&lt;/scene&gt;</pre>
+      </div>
+      <div class="pv-pane">
+        <h3 class="pv-pane-title">排版后 <span class="pv-badge pv-badge-ok">renderMessage()</span></h3>
+        <div class="pv-stage"><div class="tt-root" data-dsh-tavern-render="1" data-tt-syntax="trs"><div class="tt-prose" data-origin="prose"><span class="tt-narration">晨光从露台的玻璃门斜切进来，在厨房的地砖上划出一道浅金色的边。你还没完全睁开眼，楼下已经热闹起来——油在锅里炸开的细响，碗碟轻轻碰撞，还有一个脚步在木地板上小跑。
+厨房里第一个抬眼的是清韵。她把煎蛋翻过来，听见脚步声就一直盯着锅，</span><span class="tt-action">耳朵先红了</span><span class="tt-narration">。
+</span><span class="tt-speech">“<span class="tt-speech-inner">爸爸，早……啊❤</span>”</span><span class="tt-narration">她把铲子放下，转过身来，</span><span class="tt-speech">“<span class="tt-speech-inner">清韵做了早饭。那个……蛋有点焦，对不起。</span>”</span><span class="tt-narration">
+她说到一半忽然停住，</span><span class="tt-action">两只手在围裙上无意识地蹭了两下</span><span class="tt-narration">。
+</span><span class="tt-speech">“<span class="tt-speech-inner">焦的才香哦！</span>”</span><span class="tt-narration">昕彤从吧台那边蹦起来，金色侧马尾一甩，赤着脚就扑到你身上。</span></div><div class="tt-meta"><span class="tt-meta-label">场景</span><span class="tt-meta-value">时间 07:22 周六 · 地点 家中厨房 · 天气 晴</span></div><section class="tt-status" data-section="status">
+    <div class="tt-section-title">状态</div>
+    <div class="tt-status-grid"><div class="tt-char">
+      <div class="tt-char-name">清韵</div>
+      <div class="tt-char-body"><span class="tt-field tt-field-num" data-key="affection"><span class="tt-gauge" data-value="62">
+    <span class="tt-gauge-ring" style="--tt-gauge:62"></span>
+    <span class="tt-gauge-text">62</span>
+    <span class="tt-gauge-label">好感</span>
+  </span></span><span class="tt-field tt-field-num" data-key="reason"><span class="tt-gauge" data-value="18">
+    <span class="tt-gauge-ring" style="--tt-gauge:18"></span>
+    <span class="tt-gauge-text">18</span>
+    <span class="tt-gauge-label">理性</span>
+  </span></span><span class="tt-field tt-field-tag" data-key="mood">
+      <span class="tt-tag-label">心情</span><span class="tt-tag-value">紧张又期待</span>
+    </span><span class="tt-field tt-field-text" data-key="outfit">
+    <span class="tt-text-label">穿着</span>米色棉布长裙，外系浅棕色围裙，赤足踩着棉拖鞋
+  </span><span class="tt-field tt-field-tag" data-key="body">
+      <span class="tt-tag-label">身体</span><span class="tt-tag-value">指尖还沾着一点面粉</span>
+    </span></div>
+      <div class="tt-char-inner">心声：爸爸在看这边……明明只是做早饭。</div>
+    </div><div class="tt-char">
+      <div class="tt-char-name">昕彤</div>
+      <div class="tt-char-body"><span class="tt-field tt-field-num" data-key="affection"><span class="tt-gauge" data-value="75">
+    <span class="tt-gauge-ring" style="--tt-gauge:75"></span>
+    <span class="tt-gauge-text">75</span>
+    <span class="tt-gauge-label">好感</span>
+  </span></span><span class="tt-field tt-field-num" data-key="reason"><span class="tt-gauge" data-value="12">
+    <span class="tt-gauge-ring" style="--tt-gauge:12"></span>
+    <span class="tt-gauge-text">12</span>
+    <span class="tt-gauge-label">理性</span>
+  </span></span><span class="tt-field tt-field-tag" data-key="mood">
+      <span class="tt-tag-label">心情</span><span class="tt-tag-value">黏人撒娇</span>
+    </span><span class="tt-field tt-field-text" data-key="outfit">
+    <span class="tt-text-label">穿着</span>宽大白衬衫当裙子穿，只扣两颗扣子，赤脚
+  </span><span class="tt-field tt-field-text" data-key="body">
+    <span class="tt-text-label">身体</span>刚睡醒，头发乱糟糟
+  </span></div>
+      <div class="tt-char-inner">心声：爸爸的手好暖哦❤可是要是不主动一点，爸爸肯定又先去看姐姐了。</div>
+    </div></div>
+  </section><section class="tt-chat" data-section="chat">
+    <div class="tt-section-title">消息 · 07:20</div>
+    <div class="tt-bubble">
+    <span class="tt-bubble-from">昕彤</span>
+    <span class="tt-bubble-text">爸爸起床了哦！快下来快下来！</span>
+  </div><div class="tt-bubble">
+    <span class="tt-bubble-from">清韵</span>
+    <span class="tt-bubble-text">……蛋要凉了呢</span>
+  </div>
+  </section><section class="tt-social" data-section="social">
+    <div class="tt-section-title">推特</div>
+    <article class="tt-post">
+      <header class="tt-post-head">
+        <span class="tt-post-name">养女日常</span>
+        <span class="tt-post-handle">@Petropavlovsk</span>
+        <span class="tt-social-stats">43k</span>
+      </header>
+      <p class="tt-post-text">周六早上！爸爸还在睡，彤彤已经做完早饭了哦（其实是姐姐做的） #日常 #周六 #早餐</p>
+      <div class="tt-social-append">图片：吧台上的煎蛋.jpg —— 盘子里摆着两颗略微焦边的煎蛋，旁边是两只小手比着V。</div>
+    </article>
+  </section><section class="tt-feed" data-variant="推荐">
+    <div class="tt-section-title">推荐</div>
+    <ul class="tt-feed-list"><li>周六限时：家用手冲咖啡套装，买一送一</li><li>亚麻家居服新款上架，轻薄透气</li><li>最新款人体工学椅，久坐不累，支撑完美</li></ul>
+  </section><section class="tt-choices" data-section="choices">
+    <div class="tt-section-title">你的选择<small class="tt-choices-hint">点一下直接发送</small></div>
+    <ol class="tt-choice-list"><li class="tt-choice" data-tt-send="先喝清韵递来的牛奶，再坐下吃早饭" role="button" tabindex="0">
+    <span class="tt-choice-index">1</span>
+    <span class="tt-choice-text">先喝清韵递来的牛奶，再坐下吃早饭</span>
+  </li><li class="tt-choice" data-tt-send="把扑过来的昕彤抱上吧台" role="button" tabindex="0">
+    <span class="tt-choice-index">2</span>
+    <span class="tt-choice-text">把扑过来的昕彤抱上吧台</span>
+  </li><li class="tt-choice" data-tt-send="让清韵把围裙解下来，看看她到底怎么了" role="button" tabindex="0">
+    <span class="tt-choice-index">3</span>
+    <span class="tt-choice-text">让清韵把围裙解下来，看看她到底怎么了</span>
+  </li></ol>
+  </section></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pv-case" id="case-b">
+    <div class="pv-case-head">
+      <span class="pv-case-id">b</span>
+      <div>
+        <h2>旧格式样例（兼容兜底） <span class="pv-tag">syntax=legacy → 排版</span></h2>
+        <p class="pv-desc">&lt;mainbody&gt; 正文 + &lt;phone&gt; 里的 &lt;Status&gt; 位置式（&lt;清韵&gt;62|18|心声|穿着…）+ &lt;twitter&gt;&lt;account1&gt;（parseSocial，含主帖 + 2 条评论）+ &lt;bilibili&gt; 直播列表 + &lt;wechat&gt; + &lt;adv&gt; + &lt;choice&gt;；字段顺序靠猜，但必须能显示出来</p>
+      </div>
+      <span class="pv-badge pv-badge-ok">structured / legacy</span>
+    </div>
+    <p class="pv-parse">summarize() → <code>prose(mainbody:6) · meta · status(2行) · social(3条) · list(bilibili:6) · wechat(2条) · list(adv:3) · choices(3项)</code></p>
+        <div class="pv-cols">
+      <div class="pv-pane">
+        <h3 class="pv-pane-title">原始 / 未排版</h3>
+        <pre class="pv-raw">&lt;mainbody&gt; 晨光从露台的玻璃门斜切进来，你还没完全睁开眼，楼下的动静就顺着楼梯爬了上来。
+厨房里第一个抬眼的是清韵。她正把煎蛋翻过来，听见脚步声就一直盯着锅，耳朵先红了。&quot;爸爸，早……啊❤&quot;她把铲子放下，转过身来，&quot;清韵做了早饭。那个……蛋有点焦，对不起。&quot;
+&quot;焦的才香哦！&quot;昕彤从吧台那边蹦起来，金色侧马尾一甩，赤着脚就扑到你身上。 &lt;/mainbody&gt;
+&lt;phone&gt; 07:22|2025-04-12 周六 &lt;Status&gt; &lt;清韵&gt;62|18|爸爸在看这边❤围裙在腰上勒得紧紧的……明明只是做早饭|米色棉布长裙，外面系着浅棕色围裙，赤足踩着棉拖鞋，头发绑在脑后|指尖还沾着一点面粉&lt;br&gt; &lt;昕彤&gt;75|12|爸爸的手好暖哦❤可是要是不主动一点，爸爸肯定又先去看姐姐了|白衬衫当裙子穿，只扣两颗扣子，赤脚，金发侧马尾|刚睡醒，头发乱糟糟&lt;br&gt; &lt;/Status&gt; &lt;twitter&gt; &lt;account1&gt; 养女日常|Petropavlovsk|43k|周六早上！爸爸还在睡，彤彤已经做完早饭了哦（其实是姐姐做的） &lt;Append&gt; 图片1：吧台上的煎蛋.jpg 盘子里摆着两颗略微焦边的煎蛋，旁边是两只小手比着V。 &lt;/Append&gt; #日常 #周六 #早餐|920|340|2100&lt;br&gt; 草莓味小甜心|StrawberrySweet|姐姐做的好吃！彤彤偷懒了吧www&lt;br&gt; 单推昕彤喵|TongtongOnly|爸爸视角？太甜了太甜了&lt;br&gt; &lt;/account1&gt; &lt;/twitter&gt; &lt;bilibili&gt; 未开播|无&lt;br&gt; 周六都不开播吗|Seiyun酱是不是在睡懒觉|等等看今晚吧|听说深夜档会有惊喜 &lt;/bilibili&gt; &lt;wechat&gt; &lt;time&gt;07:20&lt;/time&gt; &lt;昕彤&gt;爸爸起床了哦！快下来快下来！&lt;/昕彤&gt; &lt;清韵&gt;……蛋要凉了呢&lt;/清韵&gt; &lt;/wechat&gt; &lt;adv&gt; 周六限时：家用手冲咖啡套装，买一送一|亚麻家居服新款上架，轻薄透气|最新款人体工学椅，久坐不累 &lt;/adv&gt; &lt;choice&gt;先喝清韵递来的牛奶，再坐下吃早饭|把扑过来的昕彤抱上吧台|让清韵把围裙解下来，看看她到底怎么了&lt;/choice&gt; &lt;/phone&gt;</pre>
+      </div>
+      <div class="pv-pane">
+        <h3 class="pv-pane-title">排版后 <span class="pv-badge pv-badge-ok">renderMessage()</span></h3>
+        <div class="pv-stage"><div class="tt-root" data-dsh-tavern-render="1" data-tt-syntax="legacy"><div class="tt-prose" data-origin="mainbody"><span class="tt-narration">晨光从露台的玻璃门斜切进来，你还没完全睁开眼，楼下的动静就顺着楼梯爬了上来。
+厨房里第一个抬眼的是清韵。她正把煎蛋翻过来，听见脚步声就一直盯着锅，耳朵先红了。</span><span class="tt-speech">“<span class="tt-speech-inner">爸爸，早……啊❤</span>”</span><span class="tt-narration">她把铲子放下，转过身来，</span><span class="tt-speech">“<span class="tt-speech-inner">清韵做了早饭。那个……蛋有点焦，对不起。</span>”</span><span class="tt-speech">“<span class="tt-speech-inner">焦的才香哦！</span>”</span><span class="tt-narration">昕彤从吧台那边蹦起来，金色侧马尾一甩，赤着脚就扑到你身上。</span></div><div class="tt-meta"><span class="tt-meta-label">场景</span><span class="tt-meta-value">07:22 · 2025-04-12 周六</span></div><section class="tt-status" data-section="status">
+    <div class="tt-section-title">状态</div>
+    <div class="tt-status-grid"><div class="tt-char">
+      <div class="tt-char-name">清韵</div>
+      <div class="tt-char-body"><span class="tt-field tt-field-num"><span class="tt-gauge" data-value="62">
+    <span class="tt-gauge-ring" style="--tt-gauge:62"></span>
+    <span class="tt-gauge-text">62</span>
+    <span class="tt-gauge-label">好感</span>
+  </span></span><span class="tt-field tt-field-num"><span class="tt-gauge" data-value="18">
+    <span class="tt-gauge-ring" style="--tt-gauge:18"></span>
+    <span class="tt-gauge-text">18</span>
+    <span class="tt-gauge-label">理性</span>
+  </span></span><span class="tt-field tt-field-text">爸爸在看这边❤围裙在腰上勒得紧紧的……明明只是做早饭</span><span class="tt-field tt-field-text">米色棉布长裙，外面系着浅棕色围裙，赤足踩着棉拖鞋，头发绑在脑后</span><span class="tt-field tt-field-tag">指尖还沾着一点面粉</span></div>
+    </div><div class="tt-char">
+      <div class="tt-char-name">昕彤</div>
+      <div class="tt-char-body"><span class="tt-field tt-field-num"><span class="tt-gauge" data-value="75">
+    <span class="tt-gauge-ring" style="--tt-gauge:75"></span>
+    <span class="tt-gauge-text">75</span>
+    <span class="tt-gauge-label">好感</span>
+  </span></span><span class="tt-field tt-field-num"><span class="tt-gauge" data-value="12">
+    <span class="tt-gauge-ring" style="--tt-gauge:12"></span>
+    <span class="tt-gauge-text">12</span>
+    <span class="tt-gauge-label">理性</span>
+  </span></span><span class="tt-field tt-field-text">爸爸的手好暖哦❤可是要是不主动一点，爸爸肯定又先去看姐姐了</span><span class="tt-field tt-field-text">白衬衫当裙子穿，只扣两颗扣子，赤脚，金发侧马尾</span><span class="tt-field tt-field-text">刚睡醒，头发乱糟糟</span></div>
+    </div></div>
+  </section><section class="tt-social" data-section="social">
+    <div class="tt-section-title">动态</div>
+    <article class="tt-post">
+      <header class="tt-post-head">
+        <span class="tt-post-name">养女日常</span>
+        <span class="tt-post-handle">@Petropavlovsk</span>
+        <span class="tt-social-stats">43k</span>
+      </header>
+      <p class="tt-post-text">周六早上！爸爸还在睡，彤彤已经做完早饭了哦（其实是姐姐做的）  #日常 #周六 #早餐</p>
+      <div class="tt-social-append">图片1：吧台上的煎蛋.jpg 盘子里摆着两颗略微焦边的煎蛋，旁边是两只小手比着V。</div><div class="tt-social-extra"><span>920</span><span>340</span><span>2100</span></div>
+    </article><article class="tt-post">
+      <header class="tt-post-head">
+        <span class="tt-post-name">草莓味小甜心</span>
+        <span class="tt-post-handle">@StrawberrySweet</span>
+        
+      </header>
+      <p class="tt-post-text">姐姐做的好吃！彤彤偷懒了吧www</p>
+      
+    </article><article class="tt-post">
+      <header class="tt-post-head">
+        <span class="tt-post-name">单推昕彤喵</span>
+        <span class="tt-post-handle">@TongtongOnly</span>
+        
+      </header>
+      <p class="tt-post-text">爸爸视角？太甜了太甜了</p>
+      
+    </article>
+  </section><section class="tt-feed" data-variant="bilibili">
+    <div class="tt-section-title">直播</div>
+    <ul class="tt-feed-list"><li>未开播</li><li>无</li><li>周六都不开播吗</li><li>Seiyun酱是不是在睡懒觉</li><li>等等看今晚吧</li><li>听说深夜档会有惊喜</li></ul>
+  </section><section class="tt-chat" data-section="chat">
+    <div class="tt-section-title">消息 · 07:20</div>
+    <div class="tt-bubble">
+    <span class="tt-bubble-from">昕彤</span>
+    <span class="tt-bubble-text">爸爸起床了哦！快下来快下来！</span>
+  </div><div class="tt-bubble">
+    <span class="tt-bubble-from">清韵</span>
+    <span class="tt-bubble-text">……蛋要凉了呢</span>
+  </div>
+  </section><section class="tt-feed" data-variant="adv">
+    <div class="tt-section-title">推荐</div>
+    <ul class="tt-feed-list"><li>周六限时：家用手冲咖啡套装，买一送一</li><li>亚麻家居服新款上架，轻薄透气</li><li>最新款人体工学椅，久坐不累</li></ul>
+  </section><section class="tt-choices" data-section="choices">
+    <div class="tt-section-title">你的选择<small class="tt-choices-hint">点一下直接发送</small></div>
+    <ol class="tt-choice-list"><li class="tt-choice" data-tt-send="先喝清韵递来的牛奶，再坐下吃早饭" role="button" tabindex="0">
+    <span class="tt-choice-index">1</span>
+    <span class="tt-choice-text">先喝清韵递来的牛奶，再坐下吃早饭</span>
+  </li><li class="tt-choice" data-tt-send="把扑过来的昕彤抱上吧台" role="button" tabindex="0">
+    <span class="tt-choice-index">2</span>
+    <span class="tt-choice-text">把扑过来的昕彤抱上吧台</span>
+  </li><li class="tt-choice" data-tt-send="让清韵把围裙解下来，看看她到底怎么了" role="button" tabindex="0">
+    <span class="tt-choice-index">3</span>
+    <span class="tt-choice-text">让清韵把围裙解下来，看看她到底怎么了</span>
+  </li></ol>
+  </section></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pv-case" id="case-c">
+    <div class="pv-case-head">
+      <span class="pv-case-id">c</span>
+      <div>
+        <h2>普通回复样例（对照组） <span class="pv-tag">syntax=loose → 客户端明确拒绝</span></h2>
+        <p class="pv-desc">技术性 Markdown：代码块、有序列表、带引号的字符串、`*` 通配符。这段是「误伤检测」用的——排版栏里直接显示原文，不展示渲染结果</p>
+      </div>
+      <span class="pv-badge pv-badge-warn">structured / loose</span>
+    </div>
+    <p class="pv-parse">summarize() → <code>prose(loose:6)</code></p>
+        <div class="pv-cols">
+      <div class="pv-pane">
+        <h3 class="pv-pane-title">原始 / 未排版（技术回复）</h3>
+        <pre class="pv-raw">## 预览页生成器怎么跑
+
+1. 先跑 `node scripts/preview.mjs`，产物落在仓库根。
+2. 想换路径就加 `--out preview-dev.html`，浅色版会自动跟着改名。
+3. 通配符 `*.js` 与 `**/*.mjs` 都会匹配，别只测一层。
+
+```js
+import { renderMessage } from &#39;../lib/render.js&#39;;
+
+const html = renderMessage(parsed, { wrap: false });
+console.log(html.length, &quot;chars&quot;);
+```
+
+如果 `html` 是空字符串，说明这条回复不该被接管，保留原生 Markdown 即可。</pre>
+      </div>
+      <div class="pv-pane">
+        <h3 class="pv-pane-title">排版后 <span class="pv-badge pv-badge-warn">未调用排版 / 原文回退</span></h3>
+        <div class="pv-notice">
+          <strong>不该被接管，应保持原样。</strong>
+          parse → <code>kind=structured · syntax=loose</code>。
+          <br><code>syntax=loose</code> —— 客户端<strong>明确拒绝</strong>（只接管 trs / legacy），非门槛判定。
+          已在客户端根上拒绝 loose，与门槛配置无关：以后 <code>minSpeech</code> 怎么调都不会复活它。
+          所以这一栏显示的就是原文，插件不会碰它。
+        </div>
+        <pre class="pv-raw pv-raw-plain">## 预览页生成器怎么跑
+
+1. 先跑 `node scripts/preview.mjs`，产物落在仓库根。
+2. 想换路径就加 `--out preview-dev.html`，浅色版会自动跟着改名。
+3. 通配符 `*.js` 与 `**/*.mjs` 都会匹配，别只测一层。
+
+```js
+import { renderMessage } from &#39;../lib/render.js&#39;;
+
+const html = renderMessage(parsed, { wrap: false });
+console.log(html.length, &quot;chars&quot;);
+```
+
+如果 `html` 是空字符串，说明这条回复不该被接管，保留原生 Markdown 即可。</pre>
+        <details class="pv-details">
+          <summary>如果被错误接管，loose 兜底会渲染成这样（客户端已拒绝 loose，正常情况下不会出现）</summary>
+          <div class="pv-stage pv-stage-wrong"><div class="tt-root" data-dsh-tavern-render="1" data-tt-syntax="loose"><div class="tt-prose" data-origin="loose"><span class="tt-narration">## 预览页生成器怎么跑
+1. 先跑 `node scripts/preview.mjs`，产物落在仓库根。
+2. 想换路径就加 `--out preview-dev.html`，浅色版会自动跟着改名。
+3. 通配符 `</span><span class="tt-action">.js` 与 `</span><span class="tt-action">/</span><span class="tt-narration">.mjs` 都会匹配，别只测一层。
+```js
+import { renderMessage } from &#39;../lib/render.js&#39;;
+const html = renderMessage(parsed, { wrap: false });
+console.log(html.length, </span><span class="tt-speech">“<span class="tt-speech-inner">chars</span>”</span><span class="tt-narration">);
+```
+如果 `html` 是空字符串，说明这条回复不该被接管，保留原生 Markdown 即可。</span></div></div></div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section class="pv-case" id="case-d">
+    <div class="pv-case-head">
+      <span class="pv-case-id">d</span>
+      <div>
+        <h2>畸形 / 容错组 <span class="pv-tag">看不懂就原样保留，不吞内容</span></h2>
+        <p class="pv-desc">三段**独立**的坏输入，各自解析：未闭合 &lt;scene&gt;（缺 &lt;/scene&gt;）、大写 &lt;Status&gt; 混在旧格式 &lt;phone&gt; 里、自创标签 &lt;心情&gt;。用来肉眼确认解析器没有把内容吃掉</p>
+      </div>
+      <span class="pv-badge pv-badge-ok">d1:trs d2:legacy d3:trs</span>
+    </div>
+    <div class="pv-pane pv-pane-wide"><div class="pv-sub">
+        <div class="pv-sub-head">
+          <span class="pv-sub-id">d1</span>
+          <span class="pv-sub-label">未闭合 &lt;scene&gt;（缺 &lt;/scene&gt;）</span>
+          <span class="pv-badge pv-badge-ok">structured / trs</span>
+        </div>
+        <p class="pv-sub-note">有开始没结束 → 吞到结尾，正文与选项都必须还在</p>
+        <p class="pv-parse">summarize() → <code>prose(prose:2) · choices(2项)</code></p>
+        <div class="pv-cols">
+          <div class="pv-pane">
+            <h3 class="pv-pane-title">原始 / 未排版</h3>
+            <pre class="pv-raw">&lt;scene&gt;
+&lt;prose&gt;
+雨还没停。她把伞收起来，甩了两下，水珠在地砖上溅开。
+&quot;你等很久了吧？&quot;
+&lt;/prose&gt;
+&lt;panel&gt;
+&lt;choice&gt;
+  &lt;opt&gt;把伞接过来&lt;/opt&gt;
+  &lt;opt&gt;先问问她路上怎么了&lt;/opt&gt;
+&lt;/choice&gt;
+&lt;/panel&gt;</pre>
+          </div>
+          <div class="pv-pane">
+            <h3 class="pv-pane-title">排版后 <span class="pv-badge pv-badge-ok">renderMessage()</span></h3>
+            <div class="pv-notice pv-notice-ok">
+            <strong>✓ 零丢失：</strong>4 个关键片段全部保留
+          </div>
+            <div class="pv-stage"><div class="tt-root" data-dsh-tavern-render="1" data-tt-syntax="trs"><div class="tt-prose" data-origin="prose"><span class="tt-narration">雨还没停。她把伞收起来，甩了两下，水珠在地砖上溅开。
+</span><span class="tt-speech">“<span class="tt-speech-inner">你等很久了吧？</span>”</span></div><section class="tt-choices" data-section="choices">
+    <div class="tt-section-title">你的选择<small class="tt-choices-hint">点一下直接发送</small></div>
+    <ol class="tt-choice-list"><li class="tt-choice" data-tt-send="把伞接过来" role="button" tabindex="0">
+    <span class="tt-choice-index">1</span>
+    <span class="tt-choice-text">把伞接过来</span>
+  </li><li class="tt-choice" data-tt-send="先问问她路上怎么了" role="button" tabindex="0">
+    <span class="tt-choice-index">2</span>
+    <span class="tt-choice-text">先问问她路上怎么了</span>
+  </li></ol>
+  </section></div></div>
+          </div>
+        </div>
+      </div>
+<div class="pv-sub">
+        <div class="pv-sub-head">
+          <span class="pv-sub-id">d2</span>
+          <span class="pv-sub-label">大写 &lt;Status&gt; 混在旧格式 &lt;phone&gt; 里</span>
+          <span class="pv-badge pv-badge-ok">structured / legacy</span>
+        </div>
+        <p class="pv-sub-note">旧解析器大小写不敏感，位置式 62|18|心声|穿着 应照常出状态卡</p>
+        <p class="pv-parse">summarize() → <code>prose(mainbody:2) · meta · status(2行) · choices(2项)</code></p>
+        <div class="pv-cols">
+          <div class="pv-pane">
+            <h3 class="pv-pane-title">原始 / 未排版</h3>
+            <pre class="pv-raw">&lt;mainbody&gt;
+雨声渐小，屋檐下的水一连串地滴下来。&quot;进来吧，别站在门口。&quot;
+&lt;/mainbody&gt;
+&lt;phone&gt; 21:40 &lt;Status&gt;
+  &lt;清韵&gt;62|18|爸爸在看这边|米色棉布长裙|指尖还沾着雨水
+  &lt;昕彤&gt;75|12|爸爸终于回来了|白衬衫当裙子穿|刚睡醒
+&lt;/Status&gt; &lt;choice&gt;把伞接过来|先问问她路上怎么了&lt;/choice&gt; &lt;/phone&gt;</pre>
+          </div>
+          <div class="pv-pane">
+            <h3 class="pv-pane-title">排版后 <span class="pv-badge pv-badge-ok">renderMessage()</span></h3>
+            <div class="pv-notice pv-notice-ok">
+            <strong>✓ 零丢失：</strong>9 个关键片段全部保留
+          </div>
+            <div class="pv-stage"><div class="tt-root" data-dsh-tavern-render="1" data-tt-syntax="legacy"><div class="tt-prose" data-origin="mainbody"><span class="tt-narration">雨声渐小，屋檐下的水一连串地滴下来。</span><span class="tt-speech">“<span class="tt-speech-inner">进来吧，别站在门口。</span>”</span></div><div class="tt-meta"><span class="tt-meta-label">场景</span><span class="tt-meta-value">21:40</span></div><section class="tt-status" data-section="status">
+    <div class="tt-section-title">状态</div>
+    <div class="tt-status-grid"><div class="tt-char">
+      <div class="tt-char-name">清韵</div>
+      <div class="tt-char-body"><span class="tt-field tt-field-num"><span class="tt-gauge" data-value="62">
+    <span class="tt-gauge-ring" style="--tt-gauge:62"></span>
+    <span class="tt-gauge-text">62</span>
+    <span class="tt-gauge-label">好感</span>
+  </span></span><span class="tt-field tt-field-num"><span class="tt-gauge" data-value="18">
+    <span class="tt-gauge-ring" style="--tt-gauge:18"></span>
+    <span class="tt-gauge-text">18</span>
+    <span class="tt-gauge-label">理性</span>
+  </span></span><span class="tt-field tt-field-tag">爸爸在看这边</span><span class="tt-field tt-field-tag">米色棉布长裙</span><span class="tt-field tt-field-tag">指尖还沾着雨水</span></div>
+    </div><div class="tt-char">
+      <div class="tt-char-name">昕彤</div>
+      <div class="tt-char-body"><span class="tt-field tt-field-num"><span class="tt-gauge" data-value="75">
+    <span class="tt-gauge-ring" style="--tt-gauge:75"></span>
+    <span class="tt-gauge-text">75</span>
+    <span class="tt-gauge-label">好感</span>
+  </span></span><span class="tt-field tt-field-num"><span class="tt-gauge" data-value="12">
+    <span class="tt-gauge-ring" style="--tt-gauge:12"></span>
+    <span class="tt-gauge-text">12</span>
+    <span class="tt-gauge-label">理性</span>
+  </span></span><span class="tt-field tt-field-tag">爸爸终于回来了</span><span class="tt-field tt-field-tag">白衬衫当裙子穿</span><span class="tt-field tt-field-tag">刚睡醒</span></div>
+    </div></div>
+  </section><section class="tt-choices" data-section="choices">
+    <div class="tt-section-title">你的选择<small class="tt-choices-hint">点一下直接发送</small></div>
+    <ol class="tt-choice-list"><li class="tt-choice" data-tt-send="把伞接过来" role="button" tabindex="0">
+    <span class="tt-choice-index">1</span>
+    <span class="tt-choice-text">把伞接过来</span>
+  </li><li class="tt-choice" data-tt-send="先问问她路上怎么了" role="button" tabindex="0">
+    <span class="tt-choice-index">2</span>
+    <span class="tt-choice-text">先问问她路上怎么了</span>
+  </li></ol>
+  </section></div></div>
+          </div>
+        </div>
+      </div>
+<div class="pv-sub">
+        <div class="pv-sub-head">
+          <span class="pv-sub-id">d3</span>
+          <span class="pv-sub-label">自创标签 &lt;心情&gt;</span>
+          <span class="pv-badge pv-badge-ok">structured / trs</span>
+        </div>
+        <p class="pv-sub-note">解析器不认识这个标签 → 剥掉标签，里面的文字必须留在正文里</p>
+        <p class="pv-parse">summarize() → <code>prose(prose:2)</code></p>
+        <div class="pv-cols">
+          <div class="pv-pane">
+            <h3 class="pv-pane-title">原始 / 未排版</h3>
+            <pre class="pv-raw">&lt;scene&gt;&lt;prose&gt;雨还没停。&lt;心情&gt;有点紧张&lt;/心情&gt;&quot;你等很久了吧？&quot;&lt;/prose&gt;&lt;/scene&gt;</pre>
+          </div>
+          <div class="pv-pane">
+            <h3 class="pv-pane-title">排版后 <span class="pv-badge pv-badge-ok">renderMessage()</span></h3>
+            <div class="pv-notice pv-notice-ok">
+            <strong>✓ 零丢失：</strong>3 个关键片段全部保留
+          </div>
+            <div class="pv-stage"><div class="tt-root" data-dsh-tavern-render="1" data-tt-syntax="trs"><div class="tt-prose" data-origin="prose"><span class="tt-narration">雨还没停。有点紧张</span><span class="tt-speech">“<span class="tt-speech-inner">你等很久了吧？</span>”</span></div></div></div>
+          </div>
+        </div>
+      </div></div>
+  </section>
+
+  <section class="pv-checks">
+    <h2>自检 <span class="pv-tag">脚本内断言，任一失败 exit 1</span></h2>
+    <ul>
+      <li class="pv-ok">✓ [a] TRS 渲染 HTML 含 tt-speech / tt-char / tt-choice / tt-bubble（全部命中，5146 字符）</li>
+      <li class="pv-ok">✓ [a] parse → kind=structured syntax=trs（应为 structured/trs）</li>
+      <li class="pv-ok">✓ [a] 客户端接管判定：会接管（syntax=trs，命中 &lt;chars&gt; 分区，客户端接管）</li>
+      <li class="pv-ok">✓ [b] parse → kind=structured syntax=legacy（应为 legacy）</li>
+      <li class="pv-ok">✓ [b] 旧格式渲染 HTML 含 tt-char 状态卡（5122 字符）</li>
+      <li class="pv-ok">✓ [b] 旧格式位置式数值渲染出环形仪表（tt-gauge）</li>
+      <li class="pv-ok">✓ [b] &lt;twitter&gt;&lt;account1&gt; 解析出社交帖（tt-social + handle）</li>
+      <li class="pv-ok">✓ [b] &lt;bilibili&gt; 解析出直播列表（data-variant=&quot;bilibili&quot;）</li>
+      <li class="pv-ok">✓ [c] syntax === &#39;loose&#39;（预期值；这是客户端在根上拒绝的分支，不是门槛兜底）</li>
+      <li class="pv-ok">✓ [c] 客户端不接管：syntax=loose —— 客户端明确拒绝（只接管 trs / legacy），非门槛判定</li>
+      <li class="pv-ok">✓ [c] 不在可接管语法集合内（trs/legacy），与 minSpeech 门槛无关</li>
+      <li class="pv-ok">✓ [c] 走对照组模式：排版栏显示原文（renderMessage 输出只作「假设被接管」的反例折叠展示）</li>
+      <li class="pv-ok">✓ [d] 三段互相独立的坏输入（实际 3 段）</li>
+      <li class="pv-ok">✓ [d1] 未闭合 &lt;scene&gt; 仍判成 trs（kind=structured syntax=trs）</li>
+      <li class="pv-ok">✓ [d2] 大写 &lt;Status&gt; 在 &lt;phone&gt; 里仍判 legacy 且解析出 2 行状态</li>
+      <li class="pv-ok">✓ [d3] 自创 &lt;心情&gt; 标签被剥掉，但里面的文字保留在正文里（不吞内容）</li>
+      <li class="pv-ok">✓ [d1] 渲染保留全部 4 个关键片段，零丢失</li>
+      <li class="pv-ok">✓ [d2] 渲染保留全部 9 个关键片段，零丢失</li>
+      <li class="pv-ok">✓ [d3] 渲染保留全部 3 个关键片段，零丢失</li>
+      <li class="pv-ok">✓ [页面] 内联 CSS 里没有 &lt;script</li>
+    </ul>
+  </section>
+
+  <p class="pv-foot">
+    左栏是原始 TRS 文本（等宽、未排版）；右栏是 <code>renderMessage(parseMessage(raw))</code> 的真实输出，外包 <code>.tt-root</code>。
+    本文件用于验证暗色：<code>body:where([data-dsh-tavern-render])</code> 的默认变量 + <code>--dsw-alias-*</code> 暗色取值。
+    插件变量本身未做任何覆写，颜色全部来自 <code>lib/styles.js</code>。
+  </p>
+</body>
+</html>
